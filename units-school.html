@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>학교 시험 세트 선택</title>
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px 40px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+
+    .grid {
+      background: #f1f3fb;
+      border-radius: 28px;
+      padding: 32px 26px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h1>학교 시험</h1>
+  <div class="subtitle">학교와 학년을 선택하세요.</div>
+
+  <section class="grid" id="school-grid">
+    <!-- JS에서 카드 생성 -->
+  </section>
+</div>
+
+<script>
+  // 학교 세트 정의
+  const SCHOOL_SETS = [
+    { id: "jsm1", label: "잠신중 1" },
+    { id: "jsm2", label: "잠신중 2" },
+    { id: "jsm3", label: "잠신중 3" },
+    { id: "scm1", label: "신천중 1" },
+    { id: "scm2", label: "신천중 2" },
+    { id: "scm3", label: "신천중 3" },
+    { id: "jsh1", label: "잠신고 1" },
+    { id: "jsh2", label: "잠신고 2" },
+    { id: "jsh3", label: "잠신고 3" }
+  ];
+
+  const grid = document.getElementById("school-grid");
+
+  SCHOOL_SETS.forEach(set => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.textContent = set.label;
+
+    // 여기서 quiz로 바로 이동 (나중에 school용 단어를 WORDS에 맞춰 넣으면 됨)
+    card.onclick = () => {
+      location.href = `quiz.html?stage=school&unit=${set.id}`;
+    };
+
+    grid.appendChild(card);
+  });
+</script>
+</body>
+</html>

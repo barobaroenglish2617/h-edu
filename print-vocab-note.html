@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>단어 시험지 출력 - Blossom English</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --pink: #ff7eb3;   /* Level 박스 */
+      --blue: #00AEEF;   /* 헤더(Num/Word/Meaning) */
+      --mint: #6ee7b7;   /* Num 컬럼 */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #ffffff;
+      padding: 24px;
+      color: #111827;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* 상단 로고 + 레벨 */
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      height: 40px;
+      width: auto;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    /* Level 박스 (핑크) */
+    .level-table {
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 120px;
+    }
+
+    .level-table th,
+    .level-table td {
+      border: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      text-align: center;
+    }
+
+    .level-table th {
+      background: var(--pink);
+      color: white;
+      font-weight: 700;
+    }
+
+    .level-table td {
+      background: #ffe6f1;
+      color: #9d174d;
+      font-weight: 600;
+    }
+
+    /* 단어 표 */
+    .word-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .word-table th,
+    .word-table td {
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+    }
+
+    /* 헤더 = 블루 */
+    .word-table thead th {
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    tr:nth-child(odd) td {
+      background: #ffffff;
+    }
+
+    tr:nth-child(even) td {
+      background: #f9fafb;
+    }
+
+    /* Num 컬럼 = 민트 */
+    .col-num {
+      width: 50px;
+      text-align: center;
+      font-weight: 600;
+      background: var(--mint);
+      color: #064e3b;
+    }
+
+    .col-word {
+      width: 230px;
+      font-weight: 600;
+    }
+
+    .col-meaning {
+      width: auto;
+    }
+
+    .print-tip {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 12px;
+      text-align: right;
+    }
+
+    @media print {
+      body { padding: 16px; }
+      .print-tip { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- 상단 -->
+  <div class="top-row">
+    <div class="logo-area">
+      <img src="blossom-logo.png" alt="Blossom English Logo" class="logo-img" />
+      <div class="logo-text">Blossom English</div>
+    </div>
+
+    <table class="level-table">
+      <thead>
+        <tr><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td id="levelText"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 단어 표 -->
+  <table class="word-table">
+    <thead>
+      <tr>
+        <th class="col-num">Num</th>
+        <th class="col-word">Word</th>
+        <th class="col-meaning">Meaning</th>
+      </tr>
+    </thead>
+    <tbody id="wordBody"></tbody>
+  </table>
+
+  <div class="print-tip">
+    이 창이 열리면 브라우저 인쇄(⌘+P / Ctrl+P)로 출력하세요.
+  </div>
+</div>
+
+<!-- words.js 불러오기 -->
+<script src="words.js"></script>
+
+<script>
+  // URL 예: print-vocab-note.html?unit=1-1
+  const params = new URLSearchParams(window.location.search);
+  const unit = params.get("unit") || "1-1";
+
+  document.getElementById("levelText").textContent = unit;
+
+  const wordBody = document.getElementById("wordBody");
+
+  function loadWordsFromDB() {
+    const db = window.WORD_DB || {};
+    const list = db[unit] || [];
+
+    if (!list.length) {
+      alert(`${unit} 단어가 없습니다.`);
+      return;
+    }
+
+    wordBody.innerHTML = "";
+
+    // 단어 개수만 출력
+    list.forEach((row, index) => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="col-num">${index + 1}</td>
+        <td class="col-word">${row.word || ""}</td>
+        <td class="col-meaning">${row.meaning || ""}</td>
+      `;
+
+      wordBody.appendChild(tr);
+    });
+
+    setTimeout(() => window.print(), 500);
+  }
+
+  if (window.WORD_DB) loadWordsFromDB();
+  else window.addEventListener("load", loadWordsFromDB);
+</script>
+
+</body>
+</html>

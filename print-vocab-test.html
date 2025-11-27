@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>어휘 시험지 출력 - 블라썸잉글리쉬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Noto Sans KR", sans-serif;
+    }
+    body {
+      background: #ffffff;
+      padding: 20px;
+    }
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    .info-line {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      word-break: break-all;
+    }
+    th {
+      background: #f3f4f6;
+      text-align: center;
+    }
+    td.blanks {
+      height: 28px;
+    }
+    .print-tip {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 12px;
+    }
+    @media print {
+      body {
+        padding: 0;
+      }
+      .print-tip {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h1>어휘 시험지</h1>
+  <div id="subtitle" class="subtitle"></div>
+
+  <div class="info-line">이름: ____________________________</div>
+  <div class="info-line">날짜: ____________________________</div>
+
+  <table id="wordTable">
+    <thead>
+      <tr>
+        <th style="width:40px;">번호</th>
+        <th style="width:200px;">영어 단어</th>
+        <th>뜻</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- JS로 단어 채움 -->
+    </tbody>
+  </table>
+
+  <div class="print-tip">
+    이 창이 뜨면 브라우저 인쇄(⌘+P / Ctrl+P)로 출력하세요.
+  </div>
+</div>
+
+<!-- words.js 사용 -->
+<script src="words.js"></script>
+<script>
+  const subtitleEl = document.getElementById("subtitle");
+  const tableBody  = document.querySelector("#wordTable tbody");
+
+  // ?level=1&sets=1,2&count=20
+  const params = new URLSearchParams(window.location.search);
+  const levelParam = params.get("level") || "";
+  const setsParam  = params.get("sets") || "";
+  const countParam = params.get("count") || "";
+
+  const setNumbers = setsParam
+    .split(",")
+    .map(s => s.trim())
+    .filter(s => s !== "");
+
+  // 🔹 서브타이틀: 어휘 1-1 / 어휘 1-1, 1-2
+  if (levelParam && setNumbers.length > 0) {
+    const units = setNumbers.map(sn => `${levelParam}-${sn}`);
+    subtitleEl.textContent = `어휘 ${units.join(", ")}`;
+  } else {
+    subtitleEl.textContent = "어휘 시험지";
+  }
+
+  function loadWords() {
+    if (!levelParam || setNumbers.length === 0) {
+      alert("레벨 또는 세트 정보가 없습니다.");
+      return;
+    }
+
+    const db = window.WORD_DB || {};
+    let allWords = [];
+
+    // level=1, sets=1,2 → "1-1", "1-2"
+    setNumbers.forEach(sn => {
+      const key = `${levelParam}-${sn}`;
+      const list = db[key] || [];
+      allWords = allWords.concat(list);
+    });
+
+    if (allWords.length === 0) {
+      alert("해당 세트에서 단어를 찾지 못했어요. (words.js 확인)");
+      return;
+    }
+
+    let limit = Number(countParam);
+    if (!limit || limit <= 0) {
+      limit = allWords.length;
+    }
+    const usedWords = allWords.slice(0, limit);
+
+    tableBody.innerHTML = "";
+    usedWords.forEach((row, idx) => {
+      const tr = document.createElement("tr");
+
+      const tdNo = document.createElement("td");
+      tdNo.textContent = idx + 1;
+      tdNo.style.textAlign = "center";
+
+      const tdEng = document.createElement("td");
+      const eng = row.word || row.english || "";
+      tdEng.textContent = eng;
+
+      const tdBlank = document.createElement("td");
+      tdBlank.className = "blanks";
+
+      tr.appendChild(tdNo);
+      tr.appendChild(tdEng);
+      tr.appendChild(tdBlank);
+      tableBody.appendChild(tr);
+    });
+
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  }
+
+  loadWords();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>학생 회원가입 - 블라썸잉글리쉬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      min-height: 100vh;
+      padding: 40px 0 60px;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 40px 40px 32px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    }
+
+    .title {
+      font-size: 30px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 26px;
+    }
+
+    .form-row {
+      margin-bottom: 18px;
+    }
+
+    .label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      outline: none;
+      background: #f9fafb;
+    }
+
+    .input:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 14px 35px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .status.error {
+      color: #b91c1c;
+    }
+
+    .status.success {
+      color: #16a34a;
+    }
+
+    .bottom-link {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #4b5563;
+      text-align: center;
+    }
+
+    .bottom-link a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link {
+      margin-top: 8px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .back-link a {
+      color: #6b7280;
+      text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 30px 20px 24px;
+        border-radius: 26px;
+      }
+      .title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <div class="title">학생 회원가입</div>
+    <div class="subtitle">아이디와 비밀번호는 영어+숫자 7자 이상으로 만들어 주세요.</div>
+
+    <div class="form-row">
+      <div class="label">학생 이름</div>
+      <input id="nameInput" class="input" placeholder="예: 김블라썸" />
+    </div>
+
+    <div class="form-row">
+      <div class="label">학생 아이디</div>
+      <input id="idInput" class="input" placeholder="예: blossom01" />
+      <div class="hint">영어+숫자 조합 7자 이상 (예: blossom01)</div>
+    </div>
+
+    <div class="form-row">
+      <div class="label">비밀번호</div>
+      <input id="pwInput" class="input" type="password" placeholder="영어+숫자 7자 이상" />
+    </div>
+
+    <div class="form-row">
+      <div class="label">부모님 전화번호</div>
+      <input id="parentInput" class="input" placeholder="예: 01012345678" />
+    </div>
+
+    <button id="submitBtn" class="btn-primary">회원가입 완료</button>
+
+    <div id="statusText" class="status"></div>
+
+    <div class="bottom-link">
+      이미 아이디가 있나요?
+      <a href="login.html">로그인 하러 가기</a>
+    </div>
+    <div class="back-link">
+      <a href="index.html">← 메인으로 돌아가기</a>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
+<script>
+  // ✅ Supabase 설정 (다른 페이지와 동일하게)
+  const SUPABASE_URL = "https://bpdisxjhhibrgfpvtlmv.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZGlzeGpoaGlicmdmcHZ0bG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NTkxODQsImV4cCI6MjA3OTUzNTE4NH0.jDZ6BGirOPuWUnt4ykjhng4PLft2ZjBuYAFzApUnlYU";
+
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const nameInput   = document.getElementById("nameInput");
+  const idInput     = document.getElementById("idInput");
+  const pwInput     = document.getElementById("pwInput");
+  const parentInput = document.getElementById("parentInput");
+  const submitBtn   = document.getElementById("submitBtn");
+  const statusText  = document.getElementById("statusText");
+
+  function setStatus(msg, type) {
+    statusText.textContent = msg || "";
+    statusText.classList.remove("error", "success");
+    if (type) statusText.classList.add(type);
+  }
+
+  // 아이디/비밀번호 규칙: 영어+숫자 7자 이상
+  const idPwRegex = /^[A-Za-z0-9]{7,}$/;
+
+  submitBtn.onclick = async () => {
+    const name   = nameInput.value.trim();
+    const sid    = idInput.value.trim();
+    const pw     = pwInput.value.trim();
+    const parent = parentInput.value.trim();
+
+    // 🔎 간단한 입력 검증
+    if (!name) {
+      setStatus("학생 이름을 입력해 주세요.", "error");
+      nameInput.focus();
+      return;
+    }
+    if (!idPwRegex.test(sid)) {
+      setStatus("아이디는 영어+숫자 7자 이상으로 입력해 주세요.", "error");
+      idInput.focus();
+      return;
+    }
+    if (!idPwRegex.test(pw)) {
+      setStatus("비밀번호는 영어+숫자 7자 이상으로 입력해 주세요.", "error");
+      pwInput.focus();
+      return;
+    }
+    if (!parent) {
+      setStatus("부모님 전화번호를 입력해 주세요.", "error");
+      parentInput.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    setStatus("회원가입을 처리하는 중입니다…");
+
+    try {
+      // 이미 같은 아이디가 있는지 한번 확인 (선택)
+      const { data: existing, error: checkError } = await client
+        .from("students")
+        .select("id")
+        .eq("student_id", sid)
+        .maybeSingle();
+
+      if (checkError) {
+        console.log("checkError:", checkError);
+      }
+
+      if (existing) {
+        setStatus("이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.", "error");
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // ✅ students 테이블에 새 학생 추가
+      const { error } = await client.from("students").insert({
+        student_id: sid,       // 로그인용 아이디
+        name: name,
+        password: pw,          // (지금은 연습용으로 평문 저장)
+        parent_phone: parent
+      });
+
+      if (error) {
+        console.error("insert error:", error);
+        // unique 제약 위반(아이디 중복)일 수 있음
+        if (error.code === "23505") {
+          setStatus("이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.", "error");
+        } else {
+          setStatus("회원가입 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.", "error");
+        }
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // localStorage에 간단히 저장 (나중에 자동 로그인 등에 사용 가능)
+      const studentInfo = {
+        login_id: sid,
+        name: name,
+        parent_phone: parent
+      };
+      try {
+        localStorage.setItem("blossom_student", JSON.stringify(studentInfo));
+      } catch (e) {
+        console.log("localStorage 오류:", e);
+      }
+
+      setStatus("회원가입이 완료되었습니다! 이제 로그인 할 수 있어요.", "success");
+
+      // 1.5초 뒤 로그인 페이지로 이동
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+
+    } catch (e) {
+      console.error("unexpected error:", e);
+      setStatus("알 수 없는 오류가 발생했어요.", "error");
+      submitBtn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

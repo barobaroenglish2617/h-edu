@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>세트 상세</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      padding: 30px 0 60px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 34px;
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+
+    .grid {
+      background: #f1f3fb;
+      border-radius: 28px;
+      padding: 30px 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .unit-card {
+      background: #ffffff;
+      border-radius: 20px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      text-align: center;
+    }
+
+    .unit-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+    }
+
+    .error-box {
+      margin-top: 8px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <!-- 위에는 세트 번호 하나만 크게 -->
+  <div class="page-title" id="page-title"></div>
+
+  <!-- 유닛 카드 영역 -->
+  <div class="grid" id="unit-grid"></div>
+
+  <!-- 에러 메시지 -->
+  <div id="error-container"></div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const stage = params.get("stage");      // "1", "2", "3"
+  const rawSet = params.get("set");       // "1"~"27"
+  const setNumber = Number(rawSet);
+
+  const titleEl = document.getElementById("page-title");
+  const gridEl  = document.getElementById("unit-grid");
+  const errorEl = document.getElementById("error-container");
+
+  let valid = false;
+
+  if (stage === "1" && setNumber >= 1  && setNumber <= 9)  valid = true;
+  else if (stage === "2" && setNumber >= 10 && setNumber <= 18) valid = true;
+  else if (stage === "3" && setNumber >= 19 && setNumber <= 27) valid = true;
+
+  if (!stage || !rawSet || Number.isNaN(setNumber) || !valid) {
+    gridEl.innerHTML = "";
+    const msg = document.createElement("div");
+    msg.className = "error-box";
+    msg.textContent = "세트 정보가 올바르지 않습니다.";
+    errorEl.appendChild(msg);
+  } else {
+    // 상단에 세트 번호만 크게 표시 (1, 10, 19 ...)
+    titleEl.textContent = String(setNumber);
+
+    // 1~60 유닛 생성: ex) 10-1, 10-2, ..., 10-60
+    for (let i = 1; i <= 60; i++) {
+      const unitId = `${setNumber}-${i}`;
+
+      const card = document.createElement("div");
+      card.className = "unit-card";
+      card.textContent = unitId;
+
+      card.onclick = () => {
+        // 기존 quiz.html 규칙 유지
+        location.href = `quiz.html?stage=${stage}&unit=${unitId}`;
+      };
+
+      gridEl.appendChild(card);
+    }
+  }
+</script>
+
+</body>
+</html>

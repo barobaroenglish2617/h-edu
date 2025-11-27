@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>내 숙제 결과 - 블라썸잉글리쉬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      padding: 30px 0 60px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .title-big {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+
+    .student-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #e0ecff;
+      color: #1d4ed8;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .result-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .result-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .badge-mode {
+      background: #d1fae5;
+      color: #047857;
+    }
+
+    .badge-unit {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .badge-date {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .result-meta {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .result-meta span + span::before {
+      content: "· ";
+      margin: 0 2px;
+    }
+
+    .result-body {
+      font-size: 14px;
+      color: #374151;
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+
+    .score-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .score-strong {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .score-percent {
+      font-weight: 600;
+      color: #2563eb;
+    }
+
+    .empty-box {
+      margin-top: 24px;
+      padding: 18px 16px;
+      border-radius: 18px;
+      background: #e5e7eb;
+      font-size: 14px;
+      color: #4b5563;
+      text-align: center;
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 10px;
+    }
+
+    .status-text.error {
+      color: #b91c1c;
+    }
+
+    .login-box {
+      margin-top: 30px;
+      padding: 20px 18px;
+      border-radius: 20px;
+      background: #ffffff;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .btn-primary {
+      margin-top: 14px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 640px) {
+      .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .result-meta {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="title-big">내 숙제 결과</div>
+  <div class="subtitle">온라인 어휘·문장 숙제의 점수를 확인할 수 있어요.</div>
+
+  <!-- 로그인 안 되어 있으면 이 박스만 보이게 -->
+  <div id="needLoginBox" class="login-box" style="display:none;">
+    <div>학생 로그인이 필요합니다. 로그인 후 다시 이용해 주세요.</div>
+    <button id="goLoginBtn" class="btn-primary">로그인 화면으로 이동</button>
+  </div>
+
+  <!-- 로그인 되어 있으면 아래 내용 보이게 -->
+  <div id="contentBox" style="display:none;">
+    <div id="studentInfo" class="student-info"></div>
+
+    <div id="resultList" class="result-list"></div>
+    <div id="emptyBox" class="empty-box" style="display:none;">
+      아직 저장된 숙제 결과가 없어요.
+    </div>
+
+    <div id="statusText" class="status-text"></div>
+  </div>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = "https://bpdisxjhhibrgfpvtlmv.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZGlzeGpoaGlicmdmcHZ0bG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NTkxODQsImV4cCI6MjA3OTUzNTE4NH0.jDZ6BGirOPuWUnt4ykjhng4PLft2ZjBuYAFzApUnlYU";
+
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const needLoginBox  = document.getElementById("needLoginBox");
+  const goLoginBtn    = document.getElementById("goLoginBtn");
+  const contentBox    = document.getElementById("contentBox");
+  const studentInfoEl = document.getElementById("studentInfo");
+  const resultListEl  = document.getElementById("resultList");
+  const emptyBoxEl    = document.getElementById("emptyBox");
+  const statusTextEl  = document.getElementById("statusText");
+
+  let currentStudent = null;
+
+  function setStatus(msg, isError = false) {
+    statusTextEl.textContent = msg || "";
+    statusTextEl.classList.toggle("error", !!isError);
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day} ${hh}:${mm}`;
+  }
+
+  function modeLabel(mode) {
+    switch (mode) {
+      case "meaning":   return "뜻 찾기";
+      case "english":   return "영어 찾기";
+      case "listening": return "듣고 찾기";
+      case "sentence":  return "문장 빈칸";
+      default:          return mode || "알 수 없음";
+    }
+  }
+
+  goLoginBtn.onclick = () => {
+    window.location.href = "login.html";
+  };
+
+  async function loadResults(studentLoginId) {
+    const { data, error } = await client
+      .from("vocab_results")
+      .select("*")
+      .eq("student_login_id", studentLoginId)
+      .order("submitted_at", { ascending: false });
+
+    if (error) {
+      console.error("vocab_results 오류:", error);
+      throw new Error("숙제 결과를 불러오는 중 오류가 발생했어요.");
+    }
+
+    if (!data || !data.length) {
+      resultListEl.innerHTML = "";
+      emptyBoxEl.style.display = "block";
+      return;
+    }
+
+    emptyBoxEl.style.display = "none";
+    resultListEl.innerHTML = "";
+
+    data.forEach(row => {
+      const percent =
+        row.total_count > 0
+          ? Math.round((row.correct_count / row.total_count) * 100)
+          : 0;
+
+      const card = document.createElement("div");
+      card.className = "result-card";
+
+      const header = document.createElement("div");
+      header.className = "result-header";
+
+      const left = document.createElement("div");
+
+      const badgeRow = document.createElement("div");
+      badgeRow.className = "badge-row";
+
+      const modeBadge = document.createElement("span");
+      modeBadge.className = "type-badge badge-mode";
+      modeBadge.textContent = modeLabel(row.mode);
+      badgeRow.appendChild(modeBadge);
+
+      const unitBadge = document.createElement("span");
+      unitBadge.className = "type-badge badge-unit";
+      unitBadge.textContent = `레벨 ${row.unit_key}`;
+      badgeRow.appendChild(unitBadge);
+
+      const dateBadge = document.createElement("span");
+      dateBadge.className = "type-badge badge-date";
+      dateBadge.textContent = formatDate(row.submitted_at);
+      badgeRow.appendChild(dateBadge);
+
+      const title = document.createElement("div");
+      title.className = "result-title";
+      title.textContent = `레벨 ${row.unit_key} · ${modeLabel(row.mode)}`;
+
+      left.appendChild(badgeRow);
+      left.appendChild(title);
+
+      const meta = document.createElement("div");
+      meta.className = "result-meta";
+      meta.innerHTML = `
+        <span>${row.correct_count} / ${row.total_count}</span>
+        <span>${percent}%</span>
+      `;
+
+      header.appendChild(left);
+      header.appendChild(meta);
+
+      const body = document.createElement("div");
+      body.className = "result-body";
+
+      const scoreRow = document.createElement("div");
+      scoreRow.className = "score-row";
+      scoreRow.innerHTML = `
+        <span class="score-strong">점수: ${row.correct_count} / ${row.total_count}</span>
+        <span class="score-percent">${percent}%</span>
+      `;
+
+      const desc = document.createElement("div");
+      desc.textContent = "숙제를 모두 완료했어요. 잘했어요!";
+
+      body.appendChild(scoreRow);
+      body.appendChild(desc);
+
+      card.appendChild(header);
+      card.appendChild(body);
+
+      resultListEl.appendChild(card);
+    });
+  }
+
+  (async function init() {
+    // 1) 학생 로그인 정보 확인
+    try {
+      const raw = localStorage.getItem("blossom_student");
+      if (!raw) {
+        needLoginBox.style.display = "block";
+        contentBox.style.display = "none";
+        return;
+      }
+      currentStudent = JSON.parse(raw);
+    } catch (e) {
+      console.error("학생 정보 파싱 오류:", e);
+      needLoginBox.style.display = "block";
+      contentBox.style.display = "none";
+      return;
+    }
+
+    needLoginBox.style.display = "none";
+    contentBox.style.display = "block";
+
+    const loginId = currentStudent.login_id || currentStudent.id || "";
+    const name    = currentStudent.name || "";
+
+    studentInfoEl.textContent = `학생: ${name || "이름 없음"} (${loginId || "아이디 없음"})`;
+
+    if (!loginId) {
+      setStatus("학생 아이디 정보를 찾을 수 없어요. 다시 로그인해 주세요.", true);
+      return;
+    }
+
+    setStatus("숙제 결과를 불러오는 중입니다…");
+
+    try {
+      await loadResults(loginId);
+      setStatus("");
+    } catch (e) {
+      console.error(e);
+      setStatus(e.message || "숙제 결과를 불러오는 중 오류가 발생했어요.", true);
+    }
+  })();
+</script>
+
+</body>
+</html>

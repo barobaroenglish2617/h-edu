@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>학생 관리 - 블라썸잉글리쉬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      padding: 24px 0 40px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    .title-big {
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .link-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 16px 18px;
+      box-shadow: 0 15px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: #f3f4f6;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+    }
+
+    th {
+      color: #4b5563;
+      font-weight: 600;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .class-select {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      font-size: 13px;
+      min-width: 110px;
+    }
+
+    .small-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #10b981;
+      color: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .small-btn[disabled] {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .status.error {
+      color: #b91c1c;
+    }
+
+    @media (max-width: 768px) {
+      .top-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      th:nth-child(2),
+      td:nth-child(2) {
+        display: none; /* 넓이 줄이려고 login_id는 모바일에서 숨김 */
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="top-row">
+    <div>
+      <div class="title-big">학생 관리</div>
+      <div class="subtitle">학생 계정에 반을 배정하고 수정할 수 있어요.</div>
+    </div>
+    <button class="link-btn" onclick="window.location.href='index.html'">
+      ← 메인으로
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="info-row">
+      <div>
+        로그인 계정:
+        <span id="teacher-email">확인 중…</span>
+        <span class="badge">선생님용 페이지</span>
+      </div>
+      <button class="small-btn" id="logout-btn">로그아웃</button>
+    </div>
+
+    <table>
+      <thead>
+      <tr>
+        <th>학생 이름</th>
+        <th>아이디</th>
+        <th>현재 반</th>
+        <th>반 변경</th>
+      </tr>
+      </thead>
+      <tbody id="students-body">
+      <!-- JS로 채움 -->
+      </tbody>
+    </table>
+
+    <div id="status-msg" class="status"></div>
+  </div>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
+<script>
+  // === 1) Supabase 클라이언트 (login.html과 같은 값 사용) ===
+  const SUPABASE_URL = "https://bpdisxjhhibrgfpvtlmv.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZGlzeGpoaGlicmdmcHZ0bG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NTkxODQsImV4cCI6MjA3OTUzNTE4NH0.jDZ6BGirOPuWUnt4ykjhng4PLft2ZjBuYAFzApUnlYU";
+
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const teacherEmailEl = document.getElementById("teacher-email");
+  const logoutBtn = document.getElementById("logout-btn");
+  const tbody = document.getElementById("students-body");
+  const statusMsg = document.getElementById("status-msg");
+
+  let classList = []; // [{id, name}, ...]
+  let classMap = {};  // id -> name
+
+  function setStatus(message, isError = false) {
+    statusMsg.textContent = message || "";
+    statusMsg.classList.toggle("error", !!isError);
+  }
+
+  // === 2) 현재 로그인한 사용자 확인 (없으면 login.html로 보내기) ===
+  async function checkAuth() {
+    const { data, error } = await client.auth.getUser();
+    if (error || !data.user) {
+      // 로그인 안 되어 있으면 로그인 페이지로
+      window.location.href = "login.html";
+      return;
+    }
+    teacherEmailEl.textContent = data.user.email || "(이메일 없음)";
+  }
+
+  logoutBtn.onclick = async () => {
+    await client.auth.signOut();
+    // 학생 로그인 정보도 같이 제거
+    localStorage.removeItem("blossom_student");
+    window.location.href = "login.html";
+  };
+
+  // === 3) classes 테이블과 students 테이블 불러오기 ===
+  async function loadClasses() {
+    // classes 테이블이 있다면: id(uuid), name(text) 기준으로 사용
+    const { data, error } = await client
+      .from("classes")
+      .select("id, name")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.warn("classes 테이블 조회 오류(없을 수도 있음):", error.message);
+      // 만약 classes 테이블이 없다면, 임시로 1반/2반/3반을 가짜 ID로 만들어 둘 수도 있지만
+      // 지금은 DB 구조를 믿고 가정할게.
+      return;
+    }
+
+    classList = data || [];
+    classMap = {};
+    classList.forEach(c => {
+      classMap[c.id] = c.name;
+    });
+  }
+
+  async function loadStudents() {
+    setStatus("학생 목록을 불러오는 중입니다…");
+    const { data, error } = await client
+      .from("students")
+      .select("id, login_id, name, class_id")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      setStatus("학생 목록을 불러오는 중 오류가 발생했어요.", true);
+      return;
+    }
+
+    renderStudents(data || []);
+    setStatus("");
+  }
+
+  function renderStudents(students) {
+    tbody.innerHTML = "";
+
+    if (!students.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.textContent = "아직 등록된 학생 계정이 없어요.";
+      td.style.textAlign = "center";
+      td.style.color = "#6b7280";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    students.forEach(student => {
+      const tr = document.createElement("tr");
+
+      // 이름
+      const tdName = document.createElement("td");
+      tdName.textContent = student.name || "(이름 없음)";
+      tr.appendChild(tdName);
+
+      // 아이디
+      const tdLoginId = document.createElement("td");
+      tdLoginId.textContent = student.login_id || "-";
+      tr.appendChild(tdLoginId);
+
+      // 현재 반
+      const tdCurrentClass = document.createElement("td");
+      if (student.class_id && classMap[student.class_id]) {
+        tdCurrentClass.textContent = classMap[student.class_id];
+      } else {
+        tdCurrentClass.textContent = "배정 안 됨";
+        tdCurrentClass.style.color = "#9ca3af";
+      }
+      tr.appendChild(tdCurrentClass);
+
+      // 반 변경 셀
+      const tdChange = document.createElement("td");
+
+      if (!classList.length) {
+        tdChange.textContent = "classes 테이블이 필요합니다.";
+        tdChange.style.color = "#b91c1c";
+      } else {
+        const select = document.createElement("select");
+        select.className = "class-select";
+
+        const emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "선택 안 함";
+        select.appendChild(emptyOpt);
+
+        classList.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          if (student.class_id === c.id) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "small-btn";
+        saveBtn.textContent = "저장";
+
+        saveBtn.onclick = async () => {
+          const newClassId = select.value || null;
+          saveBtn.disabled = true;
+          setStatus(`"${student.name}" 학생의 반을 저장 중입니다…`);
+
+          const { error } = await client
+            .from("students")
+            .update({ class_id: newClassId })
+            .eq("id", student.id);
+
+          saveBtn.disabled = false;
+
+          if (error) {
+            console.error(error);
+            setStatus("반 배정 저장 중 오류가 발생했어요.", true);
+            return;
+          }
+
+          setStatus("반 정보가 저장됐어요!");
+          // 화면에서 현재 반 표시도 업데이트
+          if (newClassId && classMap[newClassId]) {
+            tdCurrentClass.textContent = classMap[newClassId];
+            tdCurrentClass.style.color = "#111827";
+          } else {
+            tdCurrentClass.textContent = "배정 안 됨";
+            tdCurrentClass.style.color = "#9ca3af";
+          }
+        };
+
+        tdChange.appendChild(select);
+        tdChange.appendChild(document.createTextNode(" "));
+        tdChange.appendChild(saveBtn);
+      }
+
+      tr.appendChild(tdChange);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 초기 실행
+  (async function init() {
+    await checkAuth();   // 로그인 안돼 있으면 여기서 login.html로 튕김
+    await loadClasses(); // classes 테이블 읽기
+    await loadStudents();
+  })();
+</script>
+</body>
+</html>
