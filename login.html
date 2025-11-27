@@ -91,6 +91,7 @@
       font-size: 14px;
       color: #6b7280;
       margin-bottom: 16px;
+      line-height: 1.5;
     }
 
     .field-label {
@@ -123,11 +124,14 @@
       margin-bottom: 10px;
     }
 
+    /* 버튼 스타일 통일 */
     .btn {
       width: 100%;
       border: none;
       border-radius: 999px;
-      padding: 11px 14px;
+      /* padding과 height를 모든 버튼에 동일하게 적용 */
+      padding: 12px 14px; 
+      min-height: 46px; /* 높이 고정 */
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -137,6 +141,7 @@
       gap: 6px;
       white-space: nowrap;
       transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.1s ease;
+      color: #ffffff; /* 기본 글자색 흰색 */
     }
 
     .btn:active {
@@ -144,46 +149,36 @@
       box-shadow: none;
     }
 
-    /* 공통: 글자색만 지정 */
-    .btn-primary {
-      color: #ffffff;
+    /* 버튼별 색상 지정 */
+    
+    /* 선생님 - 가입 (블루로 변경) */
+    #teacherSignupBtn {
+      background: var(--blue);
+      margin-top: 10px;
     }
 
-    /* 👉 세 개 버튼 각자 색상 */
-    #teacherLoginBtn {
-      background: ffffff;
+    /* 선생님 - 구글 로그인 (핑크) */
+    #googleLoginBtn {
+      background: var(--pink);
+      margin-top: 10px; /* 간격 통일 */
     }
 
+    /* 학생 - 로그인 (민트) */
     #studentLoginBtn {
       background: var(--mint);
+      margin-top: 10px;
     }
 
+    /* 학생 - 가입 (블루) */
     #studentSignupBtn {
       background: var(--blue);
+      margin-top: 6px;
     }
 
-    /* 비활성화 상태 (주로 선생님 로그인 버튼) */
-    #teacherLoginBtn:disabled,
-    #studentLoginBtn:disabled,
-    #studentSignupBtn:disabled {
-      background: #9ca3af;
+    /* 비활성화 상태 */
+    .btn:disabled {
+      background: #9ca3af !important;
       cursor: default;
-    }
-
-    .btn-ghost {
-      background: #ffffff;
-      color: #374151;
-      border: 1px solid #d1d5db;
-    }
-
-    .btn-ghost:hover {
-      background: #f9fafb;
-    }
-
-    .btn-sub {
-      margin-top: 8px;
-      font-size: 13px;
-      padding: 9px 14px;
     }
 
     .section-title {
@@ -238,34 +233,34 @@
     <div class="card">
       <div class="card-header">
         <span class="badge-role badge-teacher">Teacher</span>
-        <div class="card-title">선생님 로그인</div>
+        <!-- 제목 변경 -->
+        <div class="card-title">선생님 로그인 / 가입</div>
       </div>
       <div class="card-desc">
-        구글 계정 또는 이메일로 로그인하면<br />
-        온라인 숙제와 반별 게시판을 관리할 수 있어요.
+        이미 계정이 있다면 구글 로그인을,<br />
+        처음 오셨다면 <strong>가입 코드</strong>를 입력해 주세요.
       </div>
 
+      <!-- 이메일/비밀번호 삭제 -> 코드 입력으로 변경 -->
       <div class="field-row">
-        <div class="field-label">이메일</div>
-        <input id="teacherEmail" class="input" type="email" placeholder="예: blossomteacher@gmail.com" />
-      </div>
-      <div class="field-row">
-        <div class="field-label">비밀번호</div>
-        <input id="teacherPassword" class="input" type="password" placeholder="Supabase에 등록된 비밀번호" />
+        <div class="field-label">코드 입력</div>
+        <input id="teacherCode" class="input" type="password" placeholder="학원에서 받은 가입 코드를 입력하세요" />
       </div>
 
-      <button id="teacherLoginBtn" class="btn btn-primary" style="margin-top: 10px;">
-        선생님 이메일로 로그인
+      <!-- 버튼: 블루색 가입 버튼 (학생 가입과 동일하게 변경됨) -->
+      <button id="teacherSignupBtn" class="btn">
+        ✨ 선생님으로 가입
       </button>
 
-      <button id="googleLoginBtn" class="btn btn-ghost btn-sub" style="background: var(--pink); color: #ffffff; border: none;">
-        🔑 구글 계정으로 로그인
-      </button>
+      <!-- 버튼: 핑크색 구글 로그인 (높이 동일) -->
+      <button id="googleLoginBtn" class="btn">
+        🔑 구글 계정으로 로그인
+      </button>
 
       <div id="teacherStatus" class="status-text"></div>
     </div>
 
-    <!-- 학생 카드 -->
+    <!-- 학생 카드 (기존 유지) -->
     <div class="card">
       <div class="card-header">
         <span class="badge-role badge-student">Student</span>
@@ -288,7 +283,7 @@
         <input id="studentLoginPw" class="input" type="password" placeholder="영어+숫자 조합 7자 이상" />
       </div>
 
-      <button id="studentLoginBtn" class="btn btn-primary" style="margin-top: 10px;">
+      <button id="studentLoginBtn" class="btn">
         👦 학생으로 로그인
       </button>
 
@@ -320,13 +315,13 @@
         <input id="studentSignupPhone" class="input" type="text" placeholder="예: 01012345678" />
       </div>
 
-      <button id="studentSignupBtn" class="btn btn-primary" style="margin-top: 6px;">
+      <button id="studentSignupBtn" class="btn">
         ✨ 학생 계정 만들기
       </button>
 
       <div id="studentStatus" class="status-text"></div>
       <div class="small-footnote">
-        ※ 학생 계정 정보는 이 브라우저(localStorage)에만 저장돼요. 반(7MB, 10MB 등)은 나중에 선생님이 설정해 줄 수 있어요.
+        ※ 학생 계정 정보는 이 브라우저(localStorage)에만 저장돼요.
       </div>
     </div>
   </div>
@@ -335,14 +330,14 @@
 <!-- Supabase JS -->
 <script src="https://unpkg.com/@supabase/supabase-js@2.48.0/dist/umd/supabase.js"></script>
 <script>
-  // ===== Supabase 설정 (선생님용) =====
+  // ===== Supabase 설정 =====
   const SUPABASE_URL = "https://bpdisxjhhibrgfpvtlmv.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwZGlzeGpoaGlicmdmcHZ0bG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NTkxODQsImV4cCI6MjA3OTUzNTE4NH0.jDZ6BGirOPuWUnt4ykjhng4PLft2ZjBuYAFzApUnlYU";
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ===== 학생 계정은 localStorage에 저장 =====
+  // ===== 학생 계정 관리 (localStorage) =====
   const STUDENT_LIST_KEY = "blossom_students_v1";
   const CURRENT_STUDENT_KEY = "blossom_student";
 
@@ -379,44 +374,37 @@
     el.className = "status-text" + (type ? " " + type : "");
   }
 
-  // ===== 선생님 로그인 (이메일/비밀번호) =====
-  const teacherEmailEl = document.getElementById("teacherEmail");
-  const teacherPasswordEl = document.getElementById("teacherPassword");
-  const teacherLoginBtn = document.getElementById("teacherLoginBtn");
+  // ===== 선생님 기능 =====
+  const teacherCodeEl = document.getElementById("teacherCode");
+  const teacherSignupBtn = document.getElementById("teacherSignupBtn");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
 
-  teacherLoginBtn.onclick = async () => {
-    const email = teacherEmailEl.value.trim();
-    const pw = teacherPasswordEl.value.trim();
+  // 선생님 가입용 비밀 코드 (예시: BLOSSOM2025)
+  const SECRET_CODE = "BLOSSOM2025"; 
 
-    if (!email || !pw) {
-      setTeacherStatus("이메일과 비밀번호를 입력해 주세요.", "error");
+  // 1. 선생님으로 가입 버튼 (코드 확인)
+  teacherSignupBtn.onclick = () => {
+    const inputCode = teacherCodeEl.value.trim();
+
+    if (!inputCode) {
+      setTeacherStatus("가입 코드를 입력해 주세요.", "error");
       return;
     }
 
-    setTeacherStatus("로그인 중입니다…");
-    teacherLoginBtn.disabled = true;
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password: pw,
-    });
-
-    teacherLoginBtn.disabled = false;
-
-    if (error) {
-      console.error("Teacher login error:", error);
-      setTeacherStatus("로그인에 실패했어요. 이메일/비밀번호를 확인해 주세요.", "error");
-      return;
+    if (inputCode === SECRET_CODE) {
+      // 코드 일치 시
+      setTeacherStatus("인증되었습니다! 아래 구글 버튼을 눌러 계정을 생성하세요.", "success");
+      teacherCodeEl.disabled = true; // 코드 입력칸 잠금
+      teacherSignupBtn.disabled = true; // 가입 버튼 잠금
+      // 여기서 바로 구글 로그인을 띄울 수도 있지만, 메시지를 보여주고 유도합니다.
+    } else {
+      // 코드 불일치
+      setTeacherStatus("코드가 올바르지 않습니다. 관리자에게 문의하세요.", "error");
     }
-
-    setTeacherStatus("로그인 성공! 잠시 후 이동합니다.", "success");
-    window.location.href = "index.html";
   };
 
-  // ===== 선생님 구글 로그인 =====
+  // 2. 선생님 구글 로그인 (기존 로직 유지)
   googleLoginBtn.onclick = async () => {
-    // 배포 폴더가 /newblossomenglish 이라서 거기로 리다이렉트
     const redirectUrl = window.location.origin + "/newblossomenglish/index.html";
     await supabaseClient.auth.signInWithOAuth({
       provider: "google",
@@ -424,7 +412,7 @@
     });
   };
 
-  // ===== 학생 로그인 =====
+  // ===== 학생 로그인 로직 (기존 유지) =====
   const studentLoginIdEl = document.getElementById("studentLoginId");
   const studentLoginPwEl = document.getElementById("studentLoginPw");
   const studentLoginBtn = document.getElementById("studentLoginBtn");
@@ -459,7 +447,7 @@
     window.location.href = "index.html";
   };
 
-  // ===== 학생 회원가입 =====
+  // ===== 학생 회원가입 로직 (기존 유지) =====
   const studentSignupIdEl = document.getElementById("studentSignupId");
   const studentSignupNameEl = document.getElementById("studentSignupName");
   const studentSignupPwEl = document.getElementById("studentSignupPw");
