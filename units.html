@@ -1,135 +1,105 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>세트 선택</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
-        system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    }
-
-    body {
-      background: #f4f6fb;
-      padding: 30px 0 60px;
-    }
-
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .title-big {
-      font-size: 34px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      font-size: 16px;
-      color: #6b7280;
-      margin-bottom: 32px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 22px;
-    }
-
-    .set-card {
-      background: #ffffff;
-      border-radius: 26px;
-      height: 120px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 700;
-      color: #111827;
-      box-shadow: 0 15px 32px rgba(15, 23, 42, 0.08);
-      transition: all 0.2s ease;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .set-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 22px 40px rgba(15, 23, 42, 0.12);
-    }
-
-    .error-box {
-      margin-top: 24px;
-      padding: 18px 20px;
-      border-radius: 18px;
-      background: #fee2e2;
-      color: #b91c1c;
-      font-size: 16px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonics Reading - Blossom English</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        /* 로딩 애니메이션 (선택사항) */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
 
-<div class="page">
-  <div class="title-big" id="page-title">세트 선택</div>
-  <div class="subtitle">학습할 세트를 선택하세요.</div>
+    <div class="max-w-4xl mx-auto p-6">
+        <button onclick="history.back()" class="mb-6 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition flex items-center gap-2">
+            ← 메인으로
+        </button>
 
-  <div class="grid" id="set-grid"></div>
-  <div id="error-container"></div>
-</div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Phonics Reading</h1>
+        <p class="text-gray-600 mb-10">읽고 싶은 이야기를 선택하세요.</p>
 
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const stage = params.get("stage");   // "1", "2", "3"
+        <div id="book-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div id="loading-message" class="col-span-full text-center py-20">
+                <div class="loader"></div>
+                <p class="text-gray-500 mt-4">데이터를 불러오는 중...</p>
+            </div>
+        </div>
+    </div>
 
-  const titleEl = document.getElementById("page-title");
-  const gridEl  = document.getElementById("set-grid");
-  const errorEl = document.getElementById("error-container");
+    <script>
+        // 1. Supabase 설정 (본인의 URL과 Key로 교체 필수!)
+        const supabaseUrl = 'YOUR_SUPABASE_URL'; 
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 단계별 세트 범위
-  let startSet, endSet;
+        // 2. DOM 요소 가져오기
+        const bookGrid = document.getElementById('book-grid');
+        const loadingMessage = document.getElementById('loading-message');
 
-  if (stage === "1") {
-    startSet = 1;
-    endSet   = 9;
-  } else if (stage === "2") {
-    startSet = 10;
-    endSet   = 18;
-  } else if (stage === "3") {
-    startSet = 19;
-    endSet   = 27;
-  }
+        // 3. 1~13번 책 목록 생성 함수
+        async function loadBooks() {
+            try {
+                // (나중에 DB 연결 시 여기에 await supabase... 코드 작성)
+                // 지금은 강제로 1~13번 배열 생성
+                const books = Array.from({ length: 13 }, (_, i) => ({
+                    id: i + 1,
+                    title: `Story ${i + 1}`,
+                    level: 'Phonics'
+                }));
 
-  // stage가 이상하면 에러
-  if (!startSet || !endSet) {
-    const msg = document.createElement("div");
-    msg.className = "error-box";
-    msg.textContent = "단계 정보가 올바르지 않습니다.";
-    errorEl.appendChild(msg);
-  } else {
-    // 상단 제목: 1단계 / 2단계 / 3단계
-    titleEl.textContent = `${stage}단계`;
+                // 로딩 메시지 숨기기 (핵심!)
+                loadingMessage.style.display = 'none';
 
-    // 세트 카드 생성
-    for (let n = startSet; n <= endSet; n++) {
-      const card = document.createElement("div");
-      card.className = "set-card";
-      card.textContent = n;     // 카드에 보이는 숫자
-      card.onclick = () => {
-        // 👉 units-detail.html 로 set=n 그대로 넘김
-        location.href = `units-detail.html?stage=${stage}&set=${n}`;
-      };
-      gridEl.appendChild(card);
-    }
-  }
-</script>
+                // 데이터가 비었으면 처리
+                if (books.length === 0) {
+                    bookGrid.innerHTML = '<p class="text-center col-span-full">표시할 책이 없습니다.</p>';
+                    return;
+                }
 
+                // 4. HTML 생성 및 렌더링
+                books.forEach(book => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 text-center group";
+                    
+                    // 카드 클릭 시 이동할 링크 설정 (예: detail.html?id=1)
+                    card.onclick = () => {
+                        alert(`${book.title}을(를) 선택했습니다.`);
+                        // location.href = `reading_detail.html?id=${book.id}`;
+                    };
+
+                    card.innerHTML = `
+                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 group-hover:bg-blue-600 group-hover:text-white transition">
+                            ${book.id}
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600">${book.title}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${book.level}</p>
+                    `;
+                    
+                    bookGrid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('에러 발생:', error);
+                loadingMessage.innerHTML = `<p class="text-red-500">데이터 로드 실패. 관리자에게 문의하세요.</p>`;
+            }
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', loadBooks);
+    </script>
 </body>
 </html>
