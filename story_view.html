@@ -24,17 +24,29 @@
             font-weight: 600; color: #555; cursor: pointer;
         }
 
-        #story-title { font-size: 32px; font-weight: 800; margin: 20px 0; }
-        
+        #story-title { font-size: 32px; font-weight: 800; margin: 20px 0 40px 0; }
         audio { width: 100%; max-width: 500px; margin-bottom: 40px; height: 40px; }
 
-        #pages-container { display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px; }
-        .story-page-img { width: 100%; height: auto; border-radius: 12px; }
+        /* --- 페이지별 스타일 (그림+글 한 세트) --- */
+        .page-block {
+            margin-bottom: 60px; /* 페이지 사이 간격 */
+            padding-bottom: 40px;
+            border-bottom: 1px dashed #ddd; /* 페이지 구분선 */
+        }
+        .page-block:last-child { border-bottom: none; }
 
-        #story-content {
-            font-size: 26px; line-height: 1.8; text-align: left;
-            background-color: #FFFDE7; padding: 40px; border-radius: 20px;
+        .story-page-img {
+            width: 100%; height: auto; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px; /* 그림과 글 사이 간격 */
+        }
+
+        .story-text-segment {
+            font-size: 24px; line-height: 1.6; color: #222;
+            text-align: left; background-color: #FFFDE7;
+            padding: 20px; border-radius: 15px;
             white-space: pre-line;
+            display: inline-block; width: 100%;
         }
     </style>
 </head>
@@ -47,17 +59,16 @@
         <div id="content-area" style="display: none;">
             <h1 id="story-title">Loading...</h1>
             <audio id="story-audio" controls></audio>
+            
             <div id="pages-container"></div>
-            <div id="story-content"></div>
         </div>
     </div>
 
     <script>
-        // ★ 1. 충돌 방지를 위해 변수 이름을 '_supabase'로 변경했습니다!
+        // ★ Supabase 설정 (키는 그대로 두세요!)
         const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
         
-        // 여기서 '_supabase'라는 새로운 이름을 씁니다.
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function loadStory() {
@@ -66,7 +77,6 @@
 
             if (!targetId) { alert("잘못된 접근입니다."); return; }
 
-            // '_supabase'를 사용해서 데이터를 가져옵니다.
             const { data, error } = await _supabase
                 .from('stories')
                 .select('*')
@@ -74,16 +84,12 @@
                 .single();
 
             if (error || !data) {
-                console.error(error);
                 document.getElementById('loading').innerText = "내용을 불러올 수 없습니다.";
                 return;
             }
 
-            // 데이터 연결
+            // 제목 및 오디오
             document.getElementById('story-title').innerText = data.title;
-            document.getElementById('story-content').innerText = data.content;
-
-            // 오디오 처리
             const audioEl = document.getElementById('story-audio');
             if (data.audio_url) {
                 audioEl.src = data.audio_url;
@@ -92,26 +98,45 @@
                 audioEl.style.display = 'none';
             }
 
-            // 이미지 처리
+            // ★ 핵심: 그림과 글 짝맞추기 로직
             const pagesContainer = document.getElementById('pages-container');
             pagesContainer.innerHTML = ''; 
 
+            // 1. 그림 주소 콤마(,)로 자르기
+            let imageUrls = [];
             if (data.page_images) {
-                const urls = data.page_images.split(',');
-                urls.forEach(url => {
-                    if (url.trim()) {
-                        const img = document.createElement('img');
-                        img.src = url.trim();
-                        img.className = 'story-page-img';
-                        pagesContainer.appendChild(img);
-                    }
-                });
+                imageUrls = data.page_images.split(',').map(u => u.trim()).filter(u => u);
             } else if (data.thumbnail_url) {
-                const img = document.createElement('img');
-                img.src = data.thumbnail_url;
-                img.className = 'story-page-img';
-                pagesContainer.appendChild(img);
+                imageUrls = [data.thumbnail_url];
             }
+
+            // 2. 글 내용 ||| 로 자르기 (없으면 빈 배열)
+            let textSegments = [];
+            if (data.content) {
+                textSegments = data.content.split('|||').map(t => t.trim());
+            }
+
+            // 3. 그림 개수만큼 반복하면서 화면에 뿌리기
+            imageUrls.forEach((url, index) => {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page-block';
+
+                // (1) 그림 넣기
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'story-page-img';
+                pageDiv.appendChild(img);
+
+                // (2) 짝에 맞는 글 넣기 (글이 있으면)
+                if (textSegments[index]) {
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'story-text-segment';
+                    textDiv.innerText = textSegments[index];
+                    pageDiv.appendChild(textDiv);
+                }
+
+                pagesContainer.appendChild(pageDiv);
+            });
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content-area').style.display = 'block';
