@@ -1,194 +1,153 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blossom English - Phonics Reading</title>
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <title>Phonics Reading - Blossom English</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
 
-    <style>
-        /* --- 전체 배경 및 폰트 설정 --- */
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background-color: #F0F2F5; /* 아주 연한 회색 배경 (참고 이미지와 유사) */
-            margin: 0;
-            padding: 40px;
-            color: #333;
-        }
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+    body {
+      background: #f4f6fb;
+      padding: 30px 0 60px;
+    }
 
-        /* --- 상단 헤더 디자인 --- */
-        header {
-            margin-bottom: 40px;
-        }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
 
-        h1 {
-            font-size: 32px;
-            font-weight: 800;
-            margin: 0 0 10px 0;
-            color: #111;
-        }
+    /* 상단 헤더 영역 */
+    header {
+        margin-bottom: 32px;
+    }
 
-        .subtitle {
-            font-size: 16px;
-            color: #666;
-            font-weight: 500;
-        }
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 15px;
+        text-decoration: none;
+        color: #6b7280;
+        font-weight: 600;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: 0.2s;
+    }
+    .back-btn:hover { background: #e9ecef; }
 
-        /* --- 뒤로가기 버튼 --- */
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: #666;
-            font-weight: 600;
-            padding: 8px 16px;
-            background: white;
-            border-radius: 20px;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            transition: 0.2s;
-        }
-        .back-link:hover { background: #e9ecef; }
+    .title-big {
+      font-size: 34px;
+      font-weight: 900;
+      color: #111;
+      margin-bottom: 6px;
+    }
 
-        /* --- 그리드 레이아웃 (카드 배치) --- */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 한 줄에 3개씩 (참고 이미지와 동일) */
-            gap: 24px; /* 카드 사이 간격 */
-        }
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+    }
 
-        /* 반응형: 화면이 작아지면 2개, 더 작아지면 1개로 줄어듦 */
-        @media (max-width: 768px) {
-            .grid-container { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 480px) {
-            .grid-container { grid-template-columns: 1fr; }
-        }
+    /* 그리드 레이아웃 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 한 줄에 3개 */
+      gap: 22px;
+    }
 
-        /* --- 카드 디자인 (흰색 박스) --- */
-        .card {
-            background: white;
-            border-radius: 24px; /* 둥근 모서리 */
-            height: 160px; /* 높이 고정 */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03); /* 아주 부드러운 그림자 */
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(0,0,0,0.02);
-            text-decoration: none; /* 링크 밑줄 제거 */
-            color: inherit;
-        }
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+        .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .grid { grid-template-columns: 1fr; }
+    }
 
-        .card:hover {
-            transform: translateY(-5px); /* 마우스 올리면 살짝 위로 */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            border-color: #6C5CE7; /* 호버 시 테두리 포인트 컬러 */
-        }
+    /* 카드 디자인 */
+    .set-card {
+      background: #ffffff;
+      border-radius: 26px;
+      height: 140px; /* 높이 살짝 키움 */
+      display: flex;
+      flex-direction: column; /* 세로 정렬 */
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 32px rgba(15, 23, 42, 0.08);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-align: center;
+      border: 2px solid transparent;
+    }
 
-        /* 카드 내부 텍스트 */
-        .card-number {
-            font-size: 36px;
-            font-weight: 800;
-            color: #333;
-            margin-bottom: 8px;
-        }
+    .set-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 22px 40px rgba(15, 23, 42, 0.12);
+      border-color: #6C5CE7; /* 호버 시 보라색 테두리 */
+    }
 
-        .card-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #888;
-        }
+    .card-number {
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 5px;
+    }
 
-        /* 로딩 메시지 */
-        #loading-msg {
-            text-align: center;
-            width: 100%;
-            grid-column: span 3;
-            color: #888;
-            margin-top: 50px;
-        }
-    </style>
+    .card-text {
+        font-size: 16px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <a href="index.html" class="back-link">← 메인으로</a>
+<div class="page">
+  <header>
+      <a href="index.html" class="back-btn">← 메인으로</a>
+      <div class="title-big">Phonics Reading</div>
+      <div class="subtitle">읽고 싶은 이야기를 선택하세요 (Story 1 ~ 13)</div>
+  </header>
 
-        <header>
-            <h1>Phonics Reading</h1>
-            <div class="subtitle">읽고 싶은 이야기를 선택하세요.</div>
-        </header>
+  <div class="grid" id="set-grid"></div>
+</div>
 
-        <div id="card-grid" class="grid-container">
-            <div id="loading-msg">데이터를 불러오는 중...</div>
-        </div>
-    </div>
+<script>
+  // 1. 설정: 총 몇 개의 스토리를 보여줄 것인가?
+  const TOTAL_STORIES = 13;
+  const gridEl = document.getElementById("set-grid");
 
-    <script>
-        // ★ Supabase 설정 (반드시 본인 키로 교체하세요!)
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // 2. 반복문으로 카드 13개 즉시 생성 (DB 로딩 없음)
+  for (let i = 1; i <= TOTAL_STORIES; i++) {
+    
+    // HTML 요소 만들기
+    const card = document.createElement("div");
+    card.className = "set-card";
+    
+    // 카드 내부 내용 (숫자와 텍스트)
+    card.innerHTML = `
+        <div class="card-number">${i}</div>
+        <div class="card-text">Story ${i}</div>
+    `;
 
-        async function init() {
-            const grid = document.getElementById('card-grid');
-            const loadingMsg = document.getElementById('loading-msg');
+    // 클릭 이벤트: 클릭하면 뷰어 페이지(story_view.html)로 이동
+    // 이때 주소 뒤에 ?id=1, ?id=2 처럼 번호를 붙여서 보냄
+    card.onclick = () => {
+      location.href = `story_view.html?id=${i}`;
+    };
 
-            try {
-                // 1. DB에서 스토리 가져오기 (정렬 순서대로)
-                const { data: stories, error } = await supabase
-                    .from('stories')
-                    .select('*')
-                    .order('sort_order', { ascending: true });
+    // 화면에 붙이기
+    gridEl.appendChild(card);
+  }
+</script>
 
-                if (error) throw error;
-
-                // 2. 로딩 메시지 제거
-                if (loadingMsg) loadingMsg.style.display = 'none';
-
-                // 3. 카드 생성
-                stories.forEach((story, index) => {
-                    // 카드 요소 생성 (div 대신 a 태그 사용해 바로 링크 기능)
-                    const card = document.createElement('a');
-                    card.className = 'card';
-                    // 클릭 시 story_view.html로 이동 (?id=스토리ID)
-                    card.href = `story_view.html?id=${story.id}`;
-
-                    // 카드 내용 (번호와 제목)
-                    // 번호는 DB에 sort_order가 있으면 그걸 쓰고, 없으면 index+1 사용
-                    const storyNum = story.sort_order || (index + 1);
-                    
-                    // 제목이 너무 길면 잘라서 보여주기 위한 로직 (옵션)
-                    // "Story 1. The Fat Cat" -> "The Fat Cat"만 보여주거나
-                    // 그대로 다 보여주거나 선택 가능. 지금은 번호를 강조.
-
-                    card.innerHTML = `
-                        <div class="card-number">${storyNum}</div>
-                        <div class="card-title">${story.title}</div>
-                    `;
-
-                    grid.appendChild(card);
-                });
-
-            } catch (err) {
-                console.error('Error:', err);
-                if (loadingMsg) loadingMsg.innerText = '목록을 불러오지 못했습니다.';
-            }
-        }
-
-        // 실행
-        init();
-    </script>
 </body>
 </html>
