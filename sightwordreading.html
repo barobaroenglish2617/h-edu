@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>문장 학습 - 블라썸잉글리쉬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden; /* 스크롤 방지 */
+    }
+
+    /* 전체 컨테이너 */
+    .study-container {
+      width: 100%;
+      max-width: 600px; /* 태블릿/PC 적정 너비 */
+      height: 90vh;
+      max-height: 800px;
+      background: white;
+      border-radius: 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 상단 헤더 (진행도) */
+    .header {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .close-btn {
+      font-size: 24px;
+      cursor: pointer;
+      color: #9ca3af;
+      background: none;
+      border: none;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #eff6ff;
+      border-radius: 99px;
+      margin: 0 16px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #00AEEF; /* 블라썸 블루 */
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .page-indicator {
+      font-size: 14px;
+      font-weight: 700;
+      color: #00AEEF;
+    }
+
+    /* 메인 콘텐츠 영역 (책 페이지) */
+    .book-viewer {
+      flex: 1;
+      position: relative;
+      display: flex;
+      /* 슬라이드 효과를 위해 가로 정렬 */
+      flex-direction: row; 
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* 개별 페이지 (카드) */
+    .page-card {
+      min-width: 100%; /* 한 번에 한 페이지만 보임 */
+      height: 100%;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    /* 이미지 영역 */
+    .img-box {
+      width: 100%;
+      max-height: 250px;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      background: #f9fafb;
+    }
+
+    .img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* 이미지 비율 유지하며 꽉 채움 */
+    }
+
+    /* 텍스트 영역 */
+    .text-content {
+      margin-bottom: 30px;
+    }
+
+    .english-text {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .korean-text {
+      font-size: 18px;
+      color: #6b7280;
+      font-weight: 500;
+      margin-bottom: 20px;
+      opacity: 0; /* 처음엔 가려둠 (옵션) */
+      transition: opacity 0.3s;
+    }
+    
+    .korean-text.visible {
+      opacity: 1;
+    }
+
+    /* 오디오 버튼 */
+    .audio-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #FF6FB5; /* 블라썸 핑크 */
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+    }
+
+    .audio-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .audio-btn.playing {
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 111, 181, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(255, 111, 181, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 111, 181, 0); }
+    }
+
+    /* 하단 컨트롤러 (이전/다음) */
+    .controls {
+      padding: 20px 30px;
+      display: flex;
+      gap: 15px;
+      background: white;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-prev {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .btn-next {
+      background: #9AD7A0; /* 블라썸 민트 */
+      color: #064e3b;
+    }
+    
+    .btn-show-kr {
+        background: #fff;
+        border: 2px solid #e5e7eb;
+        color: #4b5563;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="study-container">
+  <div class="header">
+    <button class="close-btn" onclick="history.back()">✕</button>
+    <div class="progress-bar">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+    <div id="pageIndicator" class="page-indicator">1 / 5</div>
+  </div>
+
+  <div id="bookViewer" class="book-viewer">
+    </div>
+
+  <div class="controls">
+    <button id="prevBtn" class="ctrl-btn btn-prev" disabled>이전</button>
+    <button id="toggleKrBtn" class="ctrl-btn btn-show-kr">해석 보기</button>
+    <button id="nextBtn" class="ctrl-btn btn-next">다음</button>
+  </div>
+</div>
+
+<script>
+  // 1. 학습 데이터 (나중에는 DB에서 가져올 수 있음)
+  const studyData = [
+    {
+      id: 1,
+      image: "https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?q=80&w=600&auto=format&fit=crop", // 강아지 사진 예시
+      english: "The puppy is sleeping on the sofa.",
+      korean: "강아지가 소파 위에서 자고 있어요."
+    },
+    {
+      id: 2,
+      image: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=600&auto=format&fit=crop", // 책 읽는 사진 예시
+      english: "She reads a book every morning.",
+      korean: "그녀는 매일 아침 책을 읽어요."
+    },
+    {
+      id: 3,
+      image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=600&auto=format&fit=crop", // 과일 사진
+      english: "Apples are red and delicious.",
+      korean: "사과는 빨갛고 맛있어요."
+    },
+    {
+      id: 4,
+      image: "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?q=80&w=600&auto=format&fit=crop", // 날씨
+      english: "It is sunny today.",
+      korean: "오늘은 날씨가 맑아요."
+    }
+  ];
+
+  let currentIndex = 0;
+  
+  // DOM 요소 선택
+  const viewer = document.getElementById('bookViewer');
+  const progressFill = document.getElementById('progressFill');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const toggleKrBtn = document.getElementById('toggleKrBtn');
+
+  // 2. 초기화 및 렌더링
+  function init() {
+    // 카드 HTML 생성
+    viewer.innerHTML = studyData.map((item, index) => `
+      <div class="page-card">
+        <div class="img-box">
+          <img src="${item.image}" alt="Study Image" />
+        </div>
+        <div class="text-content">
+          <div class="english-text">${item.english}</div>
+          <div class="korean-text" id="kr-${index}">${item.korean}</div>
+        </div>
+        <button class="audio-btn" onclick="speakText('${item.english}', this)">
+          🔊
+        </button>
+      </div>
+    `).join('');
+
+    updateUI();
+  }
+
+  // 3. 화면 업데이트 (슬라이드 이동)
+  function updateUI() {
+    // 뷰어 위치 이동 (X축 슬라이드)
+    viewer.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+    // 진행바 및 페이지 번호
+    const progress = ((currentIndex + 1) / studyData.length) * 100;
+    progressFill.style.width = `${progress}%`;
+    pageIndicator.textContent = `${currentIndex + 1} / ${studyData.length}`;
+
+    // 버튼 활성/비활성 상태
+    prevBtn.disabled = currentIndex === 0;
+    
+    if (currentIndex === studyData.length - 1) {
+      nextBtn.textContent = "완료 ✨";
+      nextBtn.style.background = "#FF6FB5"; // 마지막엔 핑크색
+      nextBtn.style.color = "white";
+    } else {
+      nextBtn.textContent = "다음";
+      nextBtn.style.background = "#9AD7A0";
+      nextBtn.style.color = "#064e3b";
+    }
+    
+    // 페이지 넘기면 해석 가리기 (옵션)
+    document.querySelectorAll('.korean-text').forEach(el => el.classList.remove('visible'));
+    toggleKrBtn.textContent = "해석 보기";
+  }
+
+  // 4. 이벤트 리스너
+  prevBtn.onclick = () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      updateUI();
+    }
+  };
+
+  nextBtn.onclick = () => {
+    if (currentIndex < studyData.length - 1) {
+      currentIndex++;
+      updateUI();
+    } else {
+      alert("학습을 완료했습니다! 참 잘했어요 👏");
+      // window.location.href = "index.html"; // 메인으로 돌아가기
+    }
+  };
+  
+  toggleKrBtn.onclick = () => {
+      const el = document.getElementById(`kr-${currentIndex}`);
+      if(el.classList.contains('visible')) {
+          el.classList.remove('visible');
+          toggleKrBtn.textContent = "해석 보기";
+      } else {
+          el.classList.add('visible');
+          toggleKrBtn.textContent = "해석 숨기기";
+      }
+  };
+
+  // 5. 음성 출력 기능 (Web Speech API - 브라우저 내장 TTS)
+  function speakText(text, btnElement) {
+    if ('speechSynthesis' in window) {
+      // 진행 중인 음성 취소
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US'; // 영어 발음
+      utterance.rate = 0.9; // 속도 약간 느리게 (교육용)
+      
+      // 버튼 애니메이션 효과
+      btnElement.classList.add('playing');
+      
+      utterance.onend = function() {
+          btnElement.classList.remove('playing');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("이 브라우저는 음성 재생을 지원하지 않습니다.");
+    }
+  }
+
+  // 키보드 방향키 지원
+  document.addEventListener('keydown', (e) => {
+      if(e.key === "ArrowRight") nextBtn.click();
+      if(e.key === "ArrowLeft") prevBtn.click();
+  });
+
+  // 실행
+  init();
+
+</script>
+</body>
+</html>
