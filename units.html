@@ -1,105 +1,153 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phonics Reading - Blossom English</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-    <style>
-        body { font-family: 'Pretendard', sans-serif; }
-        /* 로딩 애니메이션 (선택사항) */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Phonics Reading - Blossom English</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      background: #f4f6fb;
+      padding: 30px 0 60px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* 상단 헤더 영역 */
+    header {
+        margin-bottom: 32px;
+    }
+
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 15px;
+        text-decoration: none;
+        color: #6b7280;
+        font-weight: 600;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: 0.2s;
+    }
+    .back-btn:hover { background: #e9ecef; }
+
+    .title-big {
+      font-size: 34px;
+      font-weight: 900;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+    }
+
+    /* 그리드 레이아웃 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 한 줄에 3개 */
+      gap: 22px;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+        .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .grid { grid-template-columns: 1fr; }
+    }
+
+    /* 카드 디자인 */
+    .set-card {
+      background: #ffffff;
+      border-radius: 26px;
+      height: 140px; /* 높이 살짝 키움 */
+      display: flex;
+      flex-direction: column; /* 세로 정렬 */
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 32px rgba(15, 23, 42, 0.08);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-align: center;
+      border: 2px solid transparent;
+    }
+
+    .set-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 22px 40px rgba(15, 23, 42, 0.12);
+      border-color: #6C5CE7; /* 호버 시 보라색 테두리 */
+    }
+
+    .card-number {
+        font-size: 32px;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 5px;
+    }
+
+    .card-text {
+        font-size: 16px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
 
-    <div class="max-w-4xl mx-auto p-6">
-        <button onclick="history.back()" class="mb-6 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition flex items-center gap-2">
-            ← 메인으로
-        </button>
+<div class="page">
+  <header>
+      <a href="index.html" class="back-btn">← 메인으로</a>
+      <div class="title-big">Phonics Reading</div>
+      <div class="subtitle">읽고 싶은 이야기를 선택하세요 (Story 1 ~ 13)</div>
+  </header>
 
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Phonics Reading</h1>
-        <p class="text-gray-600 mb-10">읽고 싶은 이야기를 선택하세요.</p>
+  <div class="grid" id="set-grid"></div>
+</div>
 
-        <div id="book-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div id="loading-message" class="col-span-full text-center py-20">
-                <div class="loader"></div>
-                <p class="text-gray-500 mt-4">데이터를 불러오는 중...</p>
-            </div>
-        </div>
-    </div>
+<script>
+  // 1. 설정: 총 몇 개의 스토리를 보여줄 것인가?
+  const TOTAL_STORIES = 13;
+  const gridEl = document.getElementById("set-grid");
 
-    <script>
-        // 1. Supabase 설정 (본인의 URL과 Key로 교체 필수!)
-        const supabaseUrl = 'YOUR_SUPABASE_URL'; 
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  // 2. 반복문으로 카드 13개 즉시 생성 (DB 로딩 없음)
+  for (let i = 1; i <= TOTAL_STORIES; i++) {
+    
+    // HTML 요소 만들기
+    const card = document.createElement("div");
+    card.className = "set-card";
+    
+    // 카드 내부 내용 (숫자와 텍스트)
+    card.innerHTML = `
+        <div class="card-number">${i}</div>
+        <div class="card-text">Story ${i}</div>
+    `;
 
-        // 2. DOM 요소 가져오기
-        const bookGrid = document.getElementById('book-grid');
-        const loadingMessage = document.getElementById('loading-message');
+    // 클릭 이벤트: 클릭하면 뷰어 페이지(story_view.html)로 이동
+    // 이때 주소 뒤에 ?id=1, ?id=2 처럼 번호를 붙여서 보냄
+    card.onclick = () => {
+      location.href = `story_view.html?id=${i}`;
+    };
 
-        // 3. 1~13번 책 목록 생성 함수
-        async function loadBooks() {
-            try {
-                // (나중에 DB 연결 시 여기에 await supabase... 코드 작성)
-                // 지금은 강제로 1~13번 배열 생성
-                const books = Array.from({ length: 13 }, (_, i) => ({
-                    id: i + 1,
-                    title: `Story ${i + 1}`,
-                    level: 'Phonics'
-                }));
+    // 화면에 붙이기
+    gridEl.appendChild(card);
+  }
+</script>
 
-                // 로딩 메시지 숨기기 (핵심!)
-                loadingMessage.style.display = 'none';
-
-                // 데이터가 비었으면 처리
-                if (books.length === 0) {
-                    bookGrid.innerHTML = '<p class="text-center col-span-full">표시할 책이 없습니다.</p>';
-                    return;
-                }
-
-                // 4. HTML 생성 및 렌더링
-                books.forEach(book => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 text-center group";
-                    
-                    // 카드 클릭 시 이동할 링크 설정 (예: detail.html?id=1)
-                    card.onclick = () => {
-                        alert(`${book.title}을(를) 선택했습니다.`);
-                        // location.href = `reading_detail.html?id=${book.id}`;
-                    };
-
-                    card.innerHTML = `
-                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 group-hover:bg-blue-600 group-hover:text-white transition">
-                            ${book.id}
-                        </div>
-                        <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600">${book.title}</h3>
-                        <p class="text-sm text-gray-400 mt-1">${book.level}</p>
-                    `;
-                    
-                    bookGrid.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error('에러 발생:', error);
-                loadingMessage.innerHTML = `<p class="text-red-500">데이터 로드 실패. 관리자에게 문의하세요.</p>`;
-            }
-        }
-
-        // 페이지 로드 시 실행
-        document.addEventListener('DOMContentLoaded', loadBooks);
-    </script>
 </body>
 </html>
