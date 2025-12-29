@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story View - Blossom English</title>
+    <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* --- 기본 설정 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
+        body { background: #f4f6fb; padding: 30px 20px; color: #333; }
+
+        /* --- 레이아웃 컨테이너 (책 페이지 느낌) --- */
+        .viewer-container {
+            max-width: 800px; /* 너무 넓지 않게 */
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            text-align: center;
+            min-height: 80vh; /* 화면 꽉 차게 */
+            position: relative;
+        }
+
+        /* --- 상단 닫기 버튼 --- */
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #f1f3f5;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-btn:hover { background: #e9ecef; }
+
+        /* --- 제목 --- */
+        #story-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #111;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        /* --- 이미지 영역 --- */
+        .image-wrapper {
+            margin-bottom: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: inline-block;
+        }
+        #story-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            max-height: 400px; /* 이미지 너무 크지 않게 제한 */
+        }
+
+        /* --- 본문 텍스트 (가독성 중요!) --- */
+        #story-content {
+            font-size: 28px; /* 아이들이 읽기 좋게 아주 큼직하게 */
+            line-height: 1.8; /* 줄 간격 넓게 */
+            color: #222;
+            text-align: left; /* 본문은 왼쪽 정렬 */
+            background-color: #FFFDE7; /* 연한 노란색 (눈 편안함) */
+            padding: 40px;
+            border-radius: 20px;
+            display: inline-block;
+            width: 100%;
+            white-space: pre-line; /* DB의 줄바꿈(\n)을 그대로 반영 */
+        }
+
+        /* --- 로딩/에러 메시지 --- */
+        .status-msg { color: #888; margin-top: 100px; font-size: 18px; }
+
+        /* 모바일 대응 */
+        @media (max-width: 600px) {
+            .viewer-container { padding: 30px 20px; }
+            #story-title { font-size: 24px; }
+            #story-content { font-size: 20px; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="viewer-container">
+        <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
+
+        <div id="loading" class="status-msg">이야기를 불러오고 있어요...</div>
+
+        <div id="content-area" style="display: none;">
+            <h1 id="story-title"></h1>
+            <div class="image-wrapper">
+                <img id="story-image" src="" alt="Story Image">
+            </div>
+            <div id="story-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // ★ 1. Supabase 설정 (본인 키로 교체!)
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ★ 2. 페이지 로드 시 실행
+        async function loadStory() {
+            // URL에서 ?id=숫자 가져오기
+            const params = new URLSearchParams(window.location.search);
+            const targetId = params.get('id'); // 예: "1"
+
+            if (!targetId) {
+                alert("잘못된 접근입니다.");
+                history.back();
+                return;
+            }
+
+            // DB에서 데이터 조회 (sort_order가 targetId와 같은 것 찾기)
+            const { data, error } = await supabase
+                .from('stories')
+                .select('*')
+                .eq('sort_order', targetId) // id(uuid)가 아니라 sort_order로 찾습니다!
+                .single();
+
+            // 에러 처리
+            if (error || !data) {
+                console.error(error);
+                document.getElementById('loading').innerText = "이야기를 찾을 수 없습니다.";
+                return;
+            }
+
+            // 화면에 뿌리기
+            document.getElementById('story-title').innerText = data.title;
+            document.getElementById('story-content').innerText = data.content;
+            
+            // 이미지가 있으면 넣고, 없으면 숨김 처리 or 기본 이미지
+            const imgEl = document.getElementById('story-image');
+            if (data.thumbnail_url) {
+                imgEl.src = data.thumbnail_url;
+            } else {
+                imgEl.style.display = 'none';
+            }
+
+            // 로딩 끄고 내용 보여주기
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content-area').style.display = 'block';
+        }
+
+        loadStory();
+    </script>
+
+</body>
+</html>
