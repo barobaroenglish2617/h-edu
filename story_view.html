@@ -1,261 +1,189 @@
-// story_view.js  (Supabase 연동 + story_view.html의 id에 맞춘 버전)
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Story View</title>
 
-// Supabase 설정
-const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-// Storage 버킷
-const IMAGE_BUCKET = 'image';
-
-let storyData = {
-  title: '',
-  number: 0,
-  images: [],
-  texts: [],
-  words: [],
-  audioUrl: ''
-};
-
-let currentPage = 0;
-let totalPages = 0;
-
-const bgAudio = document.getElementById('bg-audio');
-const playBtn = document.getElementById('header-play-btn');
-
-document.addEventListener('DOMContentLoaded', loadStory);
-
-/** ---------------------------------------
- * 유틸
- * --------------------------------------*/
-function isHttpUrl(v) {
-  return typeof v === 'string' && (v.startsWith('http://') || v.startsWith('https://'));
-}
-
-// DB에서 가져온 문자열이 "'https://...'" 처럼 따옴표 포함일 수 있어서 제거
-function normalizeToken(v) {
-  if (!v) return '';
-  let s = String(v).trim();
-
-  // 줄바꿈/탭 제거
-  s = s.replace(/\r?\n|\r|\t/g, '').trim();
-
-  // 양끝 따옴표 제거 ('...' 또는 "...")
-  if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"'))) {
-    s = s.slice(1, -1).trim();
-  }
-  return s;
-}
-
-function toPublicImageUrl(fileOrUrl) {
-  const token = normalizeToken(fileOrUrl);
-  if (!token) return '';
-
-  // 이미 URL이면 그대로
-  if (isHttpUrl(token)) return token;
-
-  // 파일명/경로이면 버킷 public url 생성
-  const { data } = supabaseClient.storage.from(IMAGE_BUCKET).getPublicUrl(token);
-  return data?.publicUrl || '';
-}
-
-function safeSplitCommaList(value) {
-  if (!value) return [];
-  return String(value)
-    .split(',')
-    .map(normalizeToken)
-    .filter(Boolean);
-}
-
-/** ---------------------------------------
- * 메인 로드
- * --------------------------------------*/
-async function loadStory() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const targetId = params.get('id');
-
-    if (!targetId) {
-      alert("잘못된 접근입니다. (URL에 id가 없음)");
-      return;
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f4f6fb;
+      font-family: Pretendard, sans-serif;
     }
 
-    const { data, error } = await supabaseClient
-      .from('stories')
-      .select('*')
-      .eq('sort_order', targetId)
-      .single();
-
-    if (error || !data) {
-      console.error('Supabase error:', error);
-      alert("데이터 로딩 실패");
-      return;
+    .viewer-container {
+      max-width: 950px;
+      margin: auto;
+      background: #fff;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      min-height: 90vh;
     }
 
-    // 1) 이미지 목록
-    // page_images: "1-1.png,1-2.png,..." 또는 "https://...,..."
-    const rawImages = data.page_images
-      ? safeSplitCommaList(data.page_images)
-      : (data.thumbnail_url ? [normalizeToken(data.thumbnail_url)] : []);
-
-    const images = rawImages.map(toPublicImageUrl).filter(Boolean);
-
-    // 2) 문장(스토리 내용)
-    const texts = data.content
-      ? String(data.content).split('|||').map(s => s.trim()).filter(Boolean)
-      : [];
-
-    // 3) 단어 목록
-    let words = [];
-    if (data.words && typeof data.words === 'string') {
-      words = safeSplitCommaList(data.words);
-    } else if (Array.isArray(data.words)) {
-      words = data.words.map(w => normalizeToken(w)).filter(Boolean);
+    /* header */
+    .story-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #f4f6fb;
+      padding-bottom: 15px;
+      margin-bottom: 30px;
     }
 
-    // 단어가 비어있으면 기본값
-    if (!words.length) {
-      words = ["ant", "apple", "egg", "elf", "owl", "ox", "up", "upset", "it", "bed", "bell"];
+    .story-title {
+      font-size: 2rem;
+      font-weight: 800;
     }
 
-    storyData = {
-      title: data.title || '',
-      number: data.sort_order || Number(targetId),
-      images,
-      texts,
-      words,
-      audioUrl: normalizeToken(data.audio_url || '')
-    };
+    .page-indicator {
+      color: #888;
+      margin-top: 8px;
+    }
 
-    if (storyData.audioUrl) bgAudio.src = storyData.audioUrl;
+    .top-actions {
+      display: flex;
+      gap: 10px;
+    }
 
-    // 총 페이지: 0(단어장) + 스토리 페이지 수
-    totalPages = 1 + Math.max(storyData.images.length, storyData.texts.length);
-    if (totalPages < 1) totalPages = 1;
+    .top-actions button {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+    }
 
-    renderPage(0);
-  } catch (e) {
-    console.error('loadStory exception:', e);
-    alert("스크립트 오류가 발생했습니다. 콘솔을 확인하세요.");
-  }
-}
+    .btn-home { background: #9FE6B8; }
+    .btn-retry { background: #00AEEF; }
+    .btn-back { background: #FF6FB5; }
 
-/** ---------------------------------------
- * 렌더링
- * --------------------------------------*/
-function renderPage(index) {
-  currentPage = index;
+    .play-all-btn {
+      margin-top: 10px;
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+    }
 
-  // 제목
-  let fullTitle = storyData.title || '';
-  const prefix = `Story ${storyData.number}`;
-  if (fullTitle && !fullTitle.toLowerCase().includes(prefix.toLowerCase())) {
-    fullTitle = `${prefix}. ${fullTitle}`;
-  } else if (!fullTitle) {
-    fullTitle = prefix;
-  }
+    .content-wrapper {
+      display: flex;
+      gap: 40px;
+      flex: 1;
+    }
 
-  document.getElementById('display-title').innerText = fullTitle;
-  document.getElementById('page-indicator').innerText = `Page ${currentPage + 1} / ${totalPages}`;
+    .image-area {
+      flex: 1;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 360px;
+    }
 
-  // 오디오 버튼: 0페이지 + 오디오 있을 때만
-  if (index === 0 && storyData.audioUrl) {
-    playBtn.style.display = 'flex';
-  } else {
-    playBtn.style.display = 'none';
-    bgAudio.pause();
-    playBtn.innerHTML = `<span>🔊 Story Full Audio</span>`;
-    playBtn.classList.remove('playing');
-  }
+    .story-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
 
-  const imgEl = document.getElementById('story-img');
-  const textEl = document.getElementById('text-area');
+    .text-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
 
-  // 이미지 선택
-  let imgSrc = '';
-  if (index === 0) {
-    imgSrc = storyData.images[0] || '';
-  } else {
-    const arrayIndex = index - 1;
-    imgSrc = storyData.images[arrayIndex] || storyData.images[0] || '';
-  }
+    .story-text {
+      background: #FFFDE7;
+      padding: 30px;
+      border-radius: 20px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      width: 100%;
+    }
 
-  // 이미지 에러 처리
-  imgEl.onerror = function () {
-    this.onerror = null;
-    this.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found';
-  };
-  imgEl.src = imgSrc;
+    .word-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
 
-  // 페이지 내용
-  if (index === 0) {
-    // 단어장
-    let html = '<div class="word-grid">';
-    storyData.words.forEach(word => {
-      const safeWord = String(word).replace(/'/g, "\\'");
-      html += `<div class="word-card" onclick="playWordAudio('${safeWord}')">${word}</div>`;
-    });
-    html += '</div>';
-    textEl.innerHTML = html;
-  } else {
-    // 문장
-    const sentence = storyData.texts[index - 1] || '...';
-    textEl.innerHTML = `<div class="story-text">${sentence}</div>`;
-  }
+    .word-card {
+      border: 2px solid #eee;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+    }
 
-  // 네비 버튼
-  document.getElementById('btn-prev').disabled = (index === 0);
+    .nav-controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
 
-  const nextBtn = document.getElementById('btn-next');
-  if (index === totalPages - 1) {
-    nextBtn.innerText = "Finish";
-    nextBtn.onclick = () => goBack();
-  } else {
-    nextBtn.innerText = "Next";
-    nextBtn.onclick = () => changePage(1);
-  }
-}
+    .nav-btn {
+      padding: 15px 40px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-function changePage(step) {
-  const newPage = currentPage + step;
-  if (newPage >= 0 && newPage < totalPages) renderPage(newPage);
-}
+    .nav-btn.next { background: #5D5FEF; color: #fff; }
+  </style>
+</head>
 
-/** ---------------------------------------
- * 버튼 동작
- * --------------------------------------*/
-function toggleFullAudio() {
-  if (bgAudio.paused) {
-    bgAudio.play();
-    playBtn.innerHTML = "<span>⏸ Pause Audio</span>";
-    playBtn.classList.add('playing');
-  } else {
-    bgAudio.pause();
-    playBtn.innerHTML = "<span>🔊 Story Full Audio</span>";
-    playBtn.classList.remove('playing');
-  }
-}
+<body>
+  <div class="viewer-container">
+    <audio id="bg-audio"></audio>
 
-function playWordAudio(word) {
-  const cleanWord = word.trim().toLowerCase();
-  const audio = new Audio(`audio/${cleanWord}.mp3`);
-  audio.play();
-}
+    <header class="story-header">
+      <div>
+        <div id="display-title" class="story-title">Loading…</div>
+        <div id="page-indicator" class="page-indicator">- / -</div>
+      </div>
 
-function restartStory() {
-  renderPage(0);
-}
-function goBack() {
-  history.back();
-}
-function goHome() {
-  window.location.href = 'index.html';
-}
+      <div>
+        <div class="top-actions">
+          <button class="btn-home" onclick="goHome()">Home</button>
+          <button class="btn-retry" onclick="restartStory()">다시풀기</button>
+          <button class="btn-back" onclick="goBack()">돌아가기</button>
+        </div>
+        <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
+          🔊 Story Full Audio
+        </button>
+      </div>
+    </header>
 
-// HTML onclick에서 접근 가능하게 전역 등록
-window.toggleFullAudio = toggleFullAudio;
-window.playWordAudio = playWordAudio;
-window.changePage = changePage;
-window.restartStory = restartStory;
-window.goBack = goBack;
-window.goHome = goHome;
+    <div class="content-wrapper">
+      <div class="image-area">
+        <img id="story-img" class="story-img" />
+      </div>
+      <div id="text-area" class="text-area"></div>
+    </div>
+
+    <div class="nav-controls">
+      <button id="btn-prev" class="nav-btn" onclick="changePage(-1)">Previous</button>
+      <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
+    </div>
+  </div>
+
+  <!-- ✅ 여기 한 줄이 핵심 -->
+  <script src="./story_view.js"></script>
+</body>
+</html>
