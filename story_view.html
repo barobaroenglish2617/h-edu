@@ -22,112 +22,165 @@
             min-height: 600px; display: flex; flex-direction: column;
         }
 
-        /* --- ★ 헤더 영역 --- */
-        .story-header {
-            margin-bottom: 30px; margin-top: 10px;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-end;     /* ✅ 제목 줄과 버튼 라인 맞춤 */
-            justify-content: space-between;
-            width: 100%;
-            border-bottom: 2px solid #f4f6fb;
-            padding-bottom: 15px;
-            gap: 16px;
-        }
+       /* --- ★ 헤더 영역 --- */
+.story-header {
+    margin-bottom: 30px; margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;     /* 제목 줄과 버튼 라인 맞춤 */
+    justify-content: space-between;
+    width: 100%;
+    border-bottom: 2px solid #f4f6fb;
+    padding-bottom: 15px;
+    gap: 16px;
+}
 
-        /* 왼쪽: 제목 그룹 */
-        .header-left {
-            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
-            min-width: 0;
-        }
+/* 왼쪽: 제목 그룹 */
+.header-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    min-width: 0;
+}
 
-        .story-title {
-            font-size: 2rem; font-weight: 800; color: #222; margin: 0;
-            line-height: 1.1; word-break: keep-all; letter-spacing: -0.5px;
-        }
+.story-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #222;
+    margin: 0;
+    line-height: 1.1;
+    word-break: keep-all;
+    letter-spacing: -0.5px;
+}
 
-        .page-indicator {
-            font-size: 1rem; color: #888; font-weight: 600; margin-top: 8px;
-        }
+.page-indicator {
+    font-size: 1rem;
+    color: #888;
+    font-weight: 600;
+    margin-top: 8px;
+}
 
-        /* ✅ 오른쪽: 3버튼 + 전체듣기 */
-        .header-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-shrink: 0;
-        }
+/* 오른쪽: 3버튼 + 전체듣기 */
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
 
-        /* ✅ 3버튼(헤더 안에서 제목 줄 맞춤) */
-        .top-actions {
-            position: static;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            z-index: auto;
-        }
-        .top-actions button {
-            border: none; padding: 10px 16px; border-radius: 999px;
-            font-weight: 800; cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            transition: transform 0.15s ease, filter 0.15s ease;
-            font-size: 0.95rem; white-space: nowrap;
-        }
-        .top-actions button:hover { transform: translateY(-1px); filter: brightness(0.98); }
-        .btn-home { background: #dbeafe; color: #9FE6B8; }
-        .btn-retry { background: #ede9fe; color: #00AEEF; }
-        .btn-back { background: #fee2e2; color: #FF6FB5; }
+/* 3버튼 */
+.top-actions {
+    position: static;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 
-        /* 오른쪽: 전체 듣기 버튼 */
-        .play-all-btn {
-            background-color: #eee; color: #555;
-            border: none; padding: 10px 24px; border-radius: 50px;
-            font-size: 1rem; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; gap: 8px;
-            transition: all 0.2s; white-space: nowrap;
-            margin-bottom: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .play-all-btn:hover { background-color: #e0e0e0; transform: scale(1.05); }
-        .play-all-btn.playing {
-            background-color: #5D5FEF; color: white;
-            box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
-        }
+.top-actions button {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    transition: transform 0.15s ease, filter 0.15s ease;
+    font-size: 0.95rem;
+    white-space: nowrap;
 
-        /* --- 콘텐츠 영역 (가로 배치) --- */
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 20px;
-        }
+    /* ✅ 글자색 통일 */
+    color: #111;
+}
 
-        /* 왼쪽: 그림 영역 */
-        .image-area {
-            flex: 1; width: 100%;
-            border-radius: 20px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            background: #fff; display: flex; justify-content: center; align-items: center;
-            min-height: 360px;
-        }
-        .story-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* ✅ 전자책 느낌 */
-            display: block;
-            background: #fff;
-        }
+.top-actions button:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.97);
+}
+
+/* ✅ 버튼 배경색 (네가 정한 컬러 그대로) */
+.btn-home {
+    background: #9FE6B8;   /* mint */
+}
+
+.btn-retry {
+    background: #00AEEF;   /* blue */
+}
+
+.btn-back {
+    background: #FF6FB5;   /* pink */
+}
+
+/* 전체 듣기 버튼 */
+.play-all-btn {
+    background-color: #eee;
+    color: #555;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.play-all-btn:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.05);
+}
+
+.play-all-btn.playing {
+    background-color: #5D5FEF;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
+}
+
+/* --- 콘텐츠 영역 (가로 배치) --- */
+.content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 20px;
+}
+
+/* 왼쪽: 그림 영역 */
+.image-area {
+    flex: 1;
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 360px;
+}
+
+.story-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #fff;
+}
 
         /* 오른쪽: 텍스트 영역 */
         .text-area {
@@ -405,4 +458,5 @@
     </script>
 </body>
 </html>
+
 
