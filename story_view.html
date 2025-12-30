@@ -14,7 +14,7 @@
 
         /* --- 뷰어 컨테이너 --- */
         .viewer-container {
-            width: 100%; max-width: 900px; /* 가로 배치라 폭을 좀 더 넓혔어요 */
+            width: 100%; max-width: 900px;
             background: white; border-radius: 24px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.08);
             padding: 40px; text-align: center;
@@ -30,85 +30,83 @@
 
         /* --- 헤더 --- */
         .story-header { 
-            margin-bottom: 30px; margin-top: 10px; 
+            margin-bottom: 20px; margin-top: 10px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         
         .title-row {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
             margin-bottom: 5px;
         }
 
         .story-title { font-size: 1.8rem; font-weight: 800; color: #222; margin: 0; word-break: keep-all; }
         
-        /* 오디오 버튼 */
-        .header-audio-btn {
-            background-color: #eee; 
-            border: none; width: 40px; height: 40px; border-radius: 50%;
-            font-size: 1.2rem; cursor: pointer; display: none;
-            align-items: center; justify-content: center;
-            transition: all 0.2s; color: #555;
+        /* ★ 전체 듣기 버튼 스타일 */
+        .play-all-btn {
+            background-color: #eee; color: #555;
+            border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer; 
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
         }
-        .header-audio-btn:hover { background-color: #ddd; transform: scale(1.1); }
-        .header-audio-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
-
+        .play-all-btn:hover { background-color: #e0e0e0; transform: scale(1.05); }
+        .play-all-btn.playing { 
+            background-color: #FF6B6B; color: white; /* 재생 중엔 빨간색(Stop 느낌) 또는 초록색 */
+            animation: pulse 2s infinite;
+        }
+        
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
         }
 
-        .page-indicator { font-size: 1rem; color: #888; font-weight: 600; }
+        .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 5px; }
 
-        /* --- 콘텐츠 영역 (핵심 변경: 가로 배치) --- */
+        /* --- 콘텐츠 영역 (가로 배치) --- */
         .content-wrapper {
             flex: 1; 
             display: flex; 
-            flex-direction: row; /* 기본: 가로 배치 (PC) */
+            flex-direction: row; /* PC: 가로 */
             align-items: center; /* 수직 중앙 정렬 */
             justify-content: center;
-            gap: 40px; /* 그림과 글 사이 간격 */
+            gap: 40px; 
             margin-bottom: 20px;
         }
 
         /* 왼쪽: 그림 영역 */
         .image-area {
-            flex: 1; /* 공간의 절반 차지 */
-            width: 100%; 
-            border-radius: 20px; 
-            overflow: hidden;
+            flex: 1; width: 100%; 
+            border-radius: 20px; overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            background: #fff; /* 회색 배경 제거 -> 깔끔한 흰색 */
-            display: flex; justify-content: center; align-items: center;
+            background: #fff; display: flex; justify-content: center; align-items: center;
         }
-        .story-img { 
-            width: 100%; height: auto; 
-            display: block; /* 이미지 하단 여백 제거 */
-        }
+        .story-img { width: 100%; height: auto; display: block; }
 
         /* 오른쪽: 텍스트 영역 */
         .text-area {
-            flex: 1; /* 나머지 절반 차지 */
-            width: 100%; 
+            flex: 1; width: 100%; 
             display: flex; justify-content: center; align-items: center;
             flex-direction: column;
+            max-height: 500px; /* 너무 길어지면 스크롤 */
+            overflow-y: auto; /* 내용 많을 때 스크롤 */
         }
 
         /* 문장 스타일 */
         .story-text {
             font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6; word-break: keep-all;
             background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%;
-            text-align: left; /* 문장은 왼쪽 정렬 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
 
         /* 단어 카드 그리드 (2열) */
         .word-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; 
+            padding: 5px; /* 잘림 방지 여백 */
         }
         .word-card {
             background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
-            padding: 15px 20px; font-size: 1.2rem; font-weight: 700; color: #444;
+            padding: 12px 16px; font-size: 1.2rem; font-weight: 700; color: #444;
             display: flex; justify-content: space-between; align-items: center;
             cursor: pointer; transition: all 0.2s;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
@@ -128,17 +126,10 @@
         .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .nav-btn.next:hover:not(:disabled) { background: #4A4CD0; transform: scale(1.05); }
 
-        /* ★ 모바일 반응형 (화면 좁을 땐 위아래 배치) ★ */
+        /* 모바일 반응형 */
         @media (max-width: 768px) {
             .viewer-container { padding: 20px; max-width: 100%; border-radius: 0; min-height: 100vh; }
-            .story-title { font-size: 1.5rem; }
-            
-            .content-wrapper {
-                flex-direction: column; /* 세로 배치로 변경 */
-                gap: 30px;
-            }
-            .image-area, .text-area { flex: auto; width: 100%; }
-            .story-text { font-size: 1.5rem; padding: 20px; text-align: center; }
+            .content-wrapper { flex-direction: column; gap: 20px; }
             .nav-controls { gap: 10px; }
             .nav-btn { flex: 1; padding: 15px; }
         }
@@ -148,13 +139,14 @@
 
     <div class="viewer-container">
         <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
-
         <audio id="bg-audio"></audio>
 
         <header class="story-header">
             <div class="title-row">
                 <h1 id="display-title" class="story-title">Loading...</h1>
-                <button id="header-play-btn" class="header-audio-btn" onclick="toggleFullAudio()">🔊</button>
+                <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
+                    <span>🔊 전체 듣기</span>
+                </button>
             </div>
             <div id="page-indicator" class="page-indicator">- / -</div>
         </header>
@@ -203,10 +195,21 @@
 
             const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
             const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
-            let words = data.words ? (typeof data.words === 'string' ? data.words.split(',') : data.words) : ["kid", "pet", "pig"];
+            
+            // ★ 수정됨: 보여주고 싶은 모든 단어를 여기에 넣거나, DB에 콤마로 넣으세요!
+            // 현재는 DB에 값이 없을 때를 대비해 요청하신 목록을 기본값으로 넣었습니다.
+            let words = [];
+            if (data.words && typeof data.words === 'string') {
+                words = data.words.split(',').map(w => w.trim());
+            } else if (data.words && Array.isArray(data.words)) {
+                words = data.words;
+            } else {
+                // 임시 데이터 (요청하신 단어 목록)
+                words = ["ant", "apple", "egg", "elf", "owl", "ox", "up", "upset", "it", "bed", "bell"];
+            }
 
             storyData = {
-                title: data.title,
+                title: data.title, // 참고: DB 제목에 'Story 1'이 포함되어 있으면 화면에 'Story 1. Story 1' 처럼 보일 수 있습니다.
                 number: data.sort_order,
                 images: images,
                 texts: texts,
@@ -228,6 +231,7 @@
             document.getElementById('display-title').innerText = `Story ${storyData.number}. ${storyData.title}`;
             document.getElementById('page-indicator').innerText = `${currentPage + 1} / ${totalPages}`;
 
+            // 오디오 버튼: 0페이지(단어장) & 오디오파일 존재 시에만 보임
             if (index === 0 && storyData.audioUrl) {
                 playBtn.style.display = 'flex';
             } else {
@@ -241,6 +245,7 @@
             if (index === 0) {
                 imgEl.src = storyData.images[0] || '';
                 
+                // 단어 카드 생성
                 let html = '<div class="word-grid">';
                 storyData.words.forEach(word => {
                     html += `<div class="word-card" onclick="playWordAudio('${word}')">${word}</div>`;
@@ -276,11 +281,11 @@
         function toggleFullAudio() {
             if (bgAudio.paused) {
                 bgAudio.play();
-                playBtn.innerHTML = "⏸";
+                playBtn.innerHTML = "⏸ 듣기 중단";
                 playBtn.classList.add('playing');
             } else {
                 bgAudio.pause();
-                playBtn.innerHTML = "🔊";
+                playBtn.innerHTML = "🔊 전체 듣기";
                 playBtn.classList.remove('playing');
             }
         }
