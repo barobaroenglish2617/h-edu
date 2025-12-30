@@ -1,219 +1,295 @@
-// ==========================================
-// 1. Supabase 설정
-// ==========================================
-const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story View - Blossom English</title>
+    <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-// ==========================================
-// 2. 상태 변수 (State)
-// ==========================================
-const state = {
-    storyId: null,
-    data: null,
-    currentPage: 0,
-    totalPages: 0,
-    processedData: {
-        title: "",
-        images: [],
-        texts: [],
-        words: [],     // 여기에 DB에서 가져온 단어가 들어갑니다.
-        audioUrl: ""
-    }
-};
+    <style>
+        /* --- 기본 설정 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
+        body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-// ==========================================
-// 3. 시작 (초기화)
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    // URL에서 ?id=숫자 가져오기
-    const params = new URLSearchParams(window.location.search);
-    state.storyId = params.get('id');
+        /* --- 뷰어 컨테이너 --- */
+        .viewer-container {
+            width: 100%; max-width: 900px; /* 가로 배치라 폭을 좀 더 넓혔어요 */
+            background: white; border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 40px; text-align: center;
+            position: relative; overflow: hidden;
+            min-height: 600px; display: flex; flex-direction: column;
+        }
 
-    if (!state.storyId) {
-        alert("잘못된 접근입니다.");
-        return;
-    }
+        .close-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: #f1f3f5; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 10;
+        }
 
-    await fetchStoryData(state.storyId);
-});
-
-// ==========================================
-// 4. DB에서 데이터 가져오기 (핵심!)
-// ==========================================
-async function fetchStoryData(id) {
-    try {
-        // DB의 'stories' 테이블에서 id가 일치하는 줄을 가져옴
-        const { data, error } = await supabase
-            .from('stories')
-            .select('*')
-            .eq('sort_order', id)
-            .single();
-
-        if (error || !data) throw new Error("데이터 없음");
-
-        // --- [데이터 가공] ---
+        /* --- 헤더 --- */
+        .story-header { 
+            margin-bottom: 30px; margin-top: 10px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
         
-        // 1. 이미지 (DB: "주소1, 주소2" -> JS: ["주소1", "주소2"])
-        const images = data.page_images 
-            ? data.page_images.split(',').map(s => s.trim()) 
-            : [data.thumbnail_url];
-
-        // 2. 문장 (DB: "문장1|||문장2" -> JS: ["문장1", "문장2"])
-        const texts = data.content 
-            ? data.content.split('|||').map(s => s.trim()) 
-            : [];
-
-        // 3. 단어 (DB: "kid, pet, pig" -> JS: ["kid", "pet", "pig"])
-        // ★ 여기가 중요합니다. Story 2를 부르면 Story 2의 단어가 자동으로 들어옵니다.
-        let words = [];
-        if (data.words) {
-            // DB에 단어가 콤마(,)로 적혀있든 배열이든 알아서 처리
-            words = typeof data.words === 'string' 
-                ? data.words.split(',').map(w => w.trim()) 
-                : data.words;
-        } else {
-            // DB에 단어가 없으면 빈 배열 (화면에 아무것도 안 뜸)
-            console.warn("이 스토리에 등록된 단어가 없습니다.");
+        .title-row {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-bottom: 5px;
         }
 
-        // 4. 제목 정리 (Story 1. Story 1... 중복 방지)
-        let cleanTitle = data.title;
-        const prefix = `Story ${data.sort_order}`;
-        if (!cleanTitle.toLowerCase().startsWith('story')) {
-            cleanTitle = `${prefix}. ${cleanTitle}`;
-        }
-
-        // --- 상태 저장 ---
-        state.processedData = {
-            title: cleanTitle,
-            images: images,
-            texts: texts,
-            words: words,
-            audioUrl: data.audio_url
-        };
+        .story-title { font-size: 1.8rem; font-weight: 800; color: #222; margin: 0; word-break: keep-all; }
         
-        state.totalPages = 1 + Math.max(images.length, texts.length);
+        /* 오디오 버튼 */
+        .header-audio-btn {
+            background-color: #eee; 
+            border: none; width: 40px; height: 40px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; display: none;
+            align-items: center; justify-content: center;
+            transition: all 0.2s; color: #555;
+        }
+        .header-audio-btn:hover { background-color: #ddd; transform: scale(1.1); }
+        .header-audio-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
 
-        // 오디오 준비
-        if (state.processedData.audioUrl) {
-            document.getElementById('bg-audio').src = state.processedData.audioUrl;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
         }
 
-        // 화면 그리기 시작
-        renderView();
+        .page-indicator { font-size: 1rem; color: #888; font-weight: 600; }
 
-    } catch (err) {
-        console.error(err);
-        alert("이야기를 불러올 수 없습니다. (DB를 확인해주세요)");
-    }
-}
+        /* --- 콘텐츠 영역 (핵심 변경: 가로 배치) --- */
+        .content-wrapper {
+            flex: 1; 
+            display: flex; 
+            flex-direction: row; /* 기본: 가로 배치 (PC) */
+            align-items: center; /* 수직 중앙 정렬 */
+            justify-content: center;
+            gap: 40px; /* 그림과 글 사이 간격 */
+            margin-bottom: 20px;
+        }
 
-// ==========================================
-// 5. 화면 그리기 (Render)
-// ==========================================
-function renderView() {
-    const { currentPage, totalPages, processedData } = state;
-    
-    // 제목 & 페이지 번호
-    document.getElementById('title-el').innerText = processedData.title;
-    document.getElementById('page-el').innerText = `Page ${currentPage + 1} / ${totalPages}`;
+        /* 왼쪽: 그림 영역 */
+        .image-area {
+            flex: 1; /* 공간의 절반 차지 */
+            width: 100%; 
+            border-radius: 20px; 
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            background: #fff; /* 회색 배경 제거 -> 깔끔한 흰색 */
+            display: flex; justify-content: center; align-items: center;
+        }
+        .story-img { 
+            width: 100%; height: auto; 
+            display: block; /* 이미지 하단 여백 제거 */
+        }
 
-    // 전체 듣기 버튼 (0페이지 & 오디오 있을 때만 보임)
-    const audioBtn = document.getElementById('audio-btn-el');
-    if (currentPage === 0 && processedData.audioUrl) {
-        audioBtn.classList.add('active'); 
-    } else {
-        audioBtn.classList.remove('active');
-    }
+        /* 오른쪽: 텍스트 영역 */
+        .text-area {
+            flex: 1; /* 나머지 절반 차지 */
+            width: 100%; 
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+        }
 
-    // 버튼 상태
-    document.getElementById('prev-btn').disabled = (currentPage === 0);
-    const nextBtn = document.getElementById('next-btn');
-    
-    if (currentPage === totalPages - 1) {
-        nextBtn.innerText = "Finish";
-        nextBtn.onclick = () => history.back();
-    } else {
-        nextBtn.innerText = "Next";
-        nextBtn.onclick = () => changePage(1);
-    }
+        /* 문장 스타일 */
+        .story-text {
+            font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6; word-break: keep-all;
+            background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%;
+            text-align: left; /* 문장은 왼쪽 정렬 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
 
-    // --- 내용 갈아끼우기 ---
-    const imgEl = document.getElementById('img-el');
-    const contentBox = document.getElementById('dynamic-content');
+        /* 단어 카드 그리드 (2열) */
+        .word-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; 
+        }
+        .word-card {
+            background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
+            padding: 15px 20px; font-size: 1.2rem; font-weight: 700; color: #444;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
+        .word-card::after { content: '🔊'; font-size: 1rem; opacity: 0.3; }
 
-    // 이미지
-    const imgIndex = currentPage === 0 ? 0 : currentPage - 1;
-    imgEl.src = processedData.images[imgIndex] || processedData.images[0] || '';
+        /* 네비게이션 버튼 */
+        .nav-controls { margin-top: auto; display: flex; justify-content: center; gap: 20px; width: 100%; }
+        .nav-btn { 
+            padding: 15px 40px; border: none; border-radius: 12px; 
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.2s; min-width: 120px;
+        }
+        .nav-btn.prev { background: #f1f3f5; color: #666; }
+        .nav-btn.prev:hover { background: #e9ecef; }
+        .nav-btn.next { background: #5D5FEF; color: white; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nav-btn.next:hover:not(:disabled) { background: #4A4CD0; transform: scale(1.05); }
 
-    // 내용 (단어장 vs 문장)
-    if (currentPage === 0) {
-        // 0페이지: 단어장 그리기
-        contentBox.innerHTML = generateWordGrid(processedData.words);
-    } else {
-        // 나머지: 문장 보여주기
-        const sentence = processedData.texts[currentPage - 1] || "";
-        contentBox.innerHTML = `<div class="mode-sentence">${sentence}</div>`;
-    }
-}
+        /* ★ 모바일 반응형 (화면 좁을 땐 위아래 배치) ★ */
+        @media (max-width: 768px) {
+            .viewer-container { padding: 20px; max-width: 100%; border-radius: 0; min-height: 100vh; }
+            .story-title { font-size: 1.5rem; }
+            
+            .content-wrapper {
+                flex-direction: column; /* 세로 배치로 변경 */
+                gap: 30px;
+            }
+            .image-area, .text-area { flex: auto; width: 100%; }
+            .story-text { font-size: 1.5rem; padding: 20px; text-align: center; }
+            .nav-controls { gap: 10px; }
+            .nav-btn { flex: 1; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
 
-// ==========================================
-// 6. 단어장 HTML 생성기
-// ==========================================
-function generateWordGrid(wordList) {
-    if (!wordList || wordList.length === 0) {
-        return '<div style="color:#999;">등록된 단어가 없습니다.</div>';
-    }
+    <div class="viewer-container">
+        <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
 
-    let html = '<div class="mode-word-grid">';
-    wordList.forEach(word => {
-        // 단어 카드를 클릭하면 playWordSound 함수 실행
-        html += `
-            <div class="word-card" onclick="playWordSound('${word}')">
-                ${word}
+        <audio id="bg-audio"></audio>
+
+        <header class="story-header">
+            <div class="title-row">
+                <h1 id="display-title" class="story-title">Loading...</h1>
+                <button id="header-play-btn" class="header-audio-btn" onclick="toggleFullAudio()">🔊</button>
             </div>
-        `;
-    });
-    html += '</div>';
-    return html;
-}
+            <div id="page-indicator" class="page-indicator">- / -</div>
+        </header>
 
-// ==========================================
-// 7. 기능 함수들
-// ==========================================
+        <div class="content-wrapper">
+            <div class="image-area">
+                <img id="story-img" src="" alt="Story Scene" class="story-img">
+            </div>
+            
+            <div id="text-area" class="text-area"></div>
+        </div>
 
-// 페이지 이동
-function changePage(step) {
-    const next = state.currentPage + step;
-    if (next >= 0 && next < state.totalPages) {
-        state.currentPage = next;
-        renderView();
-    }
-}
+        <div class="nav-controls">
+            <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
+            <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
+        </div>
+    </div>
 
-// 전체 듣기
-function toggleFullAudio() {
-    const audio = document.getElementById('bg-audio');
-    const btn = document.getElementById('audio-btn-el');
+    <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    if (!state.processedData.audioUrl) return;
+        let storyData = {};
+        let currentPage = 0;
+        let totalPages = 0;
+        const bgAudio = document.getElementById('bg-audio');
+        const playBtn = document.getElementById('header-play-btn');
 
-    if (audio.paused) {
-        audio.play();
-        btn.innerHTML = "⏸ 듣기 중단";
-        btn.classList.add('playing');
-    } else {
-        audio.pause();
-        btn.innerHTML = "🔊 전체 듣기";
-        btn.classList.remove('playing');
-    }
-}
+        document.addEventListener('DOMContentLoaded', loadStory);
 
-// 단어 개별 듣기
-function playWordSound(word) {
-    // 파일명 규칙: 소문자로 변환 (Ant -> ant.mp3)
-    const cleanWord = word.trim().toLowerCase();
-    const audio = new Audio(`audio/${cleanWord}.mp3`);
-    audio.play().catch(e => console.log('단어 음원 없음:', cleanWord));
-}
+        async function loadStory() {
+            const params = new URLSearchParams(window.location.search);
+            const targetId = params.get('id');
+
+            if (!targetId) { alert("잘못된 접근입니다."); return; }
+
+            const { data, error } = await supabaseClient
+                .from('stories')
+                .select('*')
+                .eq('sort_order', targetId)
+                .single();
+
+            if (error || !data) { alert("데이터 로딩 실패"); return; }
+
+            const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
+            const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
+            let words = data.words ? (typeof data.words === 'string' ? data.words.split(',') : data.words) : ["kid", "pet", "pig"];
+
+            storyData = {
+                title: data.title,
+                number: data.sort_order,
+                images: images,
+                texts: texts,
+                words: words,
+                audioUrl: data.audio_url 
+            };
+
+            if (storyData.audioUrl) {
+                bgAudio.src = storyData.audioUrl;
+            }
+
+            totalPages = 1 + Math.max(images.length, texts.length);
+            renderPage(0);
+        }
+
+        function renderPage(index) {
+            currentPage = index;
+            
+            document.getElementById('display-title').innerText = `Story ${storyData.number}. ${storyData.title}`;
+            document.getElementById('page-indicator').innerText = `${currentPage + 1} / ${totalPages}`;
+
+            if (index === 0 && storyData.audioUrl) {
+                playBtn.style.display = 'flex';
+            } else {
+                playBtn.style.display = 'none';
+            }
+
+            const imgEl = document.getElementById('story-img');
+            const textEl = document.getElementById('text-area');
+
+            // [Page 0] 단어장
+            if (index === 0) {
+                imgEl.src = storyData.images[0] || '';
+                
+                let html = '<div class="word-grid">';
+                storyData.words.forEach(word => {
+                    html += `<div class="word-card" onclick="playWordAudio('${word}')">${word}</div>`;
+                });
+                html += '</div>';
+                textEl.innerHTML = html;
+
+            } else {
+                // [Page 1~N] 스토리
+                const arrayIndex = index - 1;
+                if (storyData.images[arrayIndex]) imgEl.src = storyData.images[arrayIndex];
+                
+                const sentence = storyData.texts[arrayIndex] || "...";
+                textEl.innerHTML = `<div class="story-text">${sentence}</div>`;
+            }
+
+            document.getElementById('btn-prev').disabled = (index === 0);
+            const nextBtn = document.getElementById('btn-next');
+            if (index === totalPages - 1) {
+                nextBtn.innerText = "Finish";
+                nextBtn.onclick = () => history.back();
+            } else {
+                nextBtn.innerText = "Next";
+                nextBtn.onclick = () => changePage(1);
+            }
+        }
+
+        function changePage(step) {
+            const newPage = currentPage + step;
+            if (newPage >= 0 && newPage < totalPages) renderPage(newPage);
+        }
+
+        function toggleFullAudio() {
+            if (bgAudio.paused) {
+                bgAudio.play();
+                playBtn.innerHTML = "⏸";
+                playBtn.classList.add('playing');
+            } else {
+                bgAudio.pause();
+                playBtn.innerHTML = "🔊";
+                playBtn.classList.remove('playing');
+            }
+        }
+
+        function playWordAudio(word) {
+            const cleanWord = word.trim().toLowerCase(); 
+            const audio = new Audio(`audio/${cleanWord}.mp3`);
+            audio.play();
+        }
+    </script>
+</body>
+</html>
