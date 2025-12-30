@@ -1,263 +1,219 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Story View - Blossom English</title>
-    <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+// ==========================================
+// 1. Supabase 설정
+// ==========================================
+const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <style>
-        /* --- [공통] 스타일 --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
-        body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+// ==========================================
+// 2. 상태 변수 (State)
+// ==========================================
+const state = {
+    storyId: null,
+    data: null,
+    currentPage: 0,
+    totalPages: 0,
+    processedData: {
+        title: "",
+        images: [],
+        texts: [],
+        words: [],     // 여기에 DB에서 가져온 단어가 들어갑니다.
+        audioUrl: ""
+    }
+};
 
-        /* 책(뷰어) 틀 */
-        .viewer-container {
-            width: 100%; max-width: 950px;
-            background: white; border-radius: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 40px; 
-            position: relative; overflow: hidden;
-            min-height: 600px; display: flex; flex-direction: column;
-        }
+// ==========================================
+// 3. 시작 (초기화)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    // URL에서 ?id=숫자 가져오기
+    const params = new URLSearchParams(window.location.search);
+    state.storyId = params.get('id');
 
-        /* 닫기 버튼 (항상 고정) */
-        .close-btn {
-            position: absolute; top: 20px; right: 20px;
-            background: #f1f3f5; border: none; padding: 8px 16px;
-            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 20;
-        }
+    if (!state.storyId) {
+        alert("잘못된 접근입니다.");
+        return;
+    }
 
-        /* --- 헤더 (제목 + 전체듣기 버튼) --- */
-        .story-header { 
-            display: flex; justify-content: space-between; align-items: flex-end;
-            width: 100%; padding-bottom: 20px; border-bottom: 2px solid #f8f9fa; margin-bottom: 30px;
-            padding-right: 60px; /* 닫기 버튼 공간 */
-        }
+    await fetchStoryData(state.storyId);
+});
+
+// ==========================================
+// 4. DB에서 데이터 가져오기 (핵심!)
+// ==========================================
+async function fetchStoryData(id) {
+    try {
+        // DB의 'stories' 테이블에서 id가 일치하는 줄을 가져옴
+        const { data, error } = await supabase
+            .from('stories')
+            .select('*')
+            .eq('sort_order', id)
+            .single();
+
+        if (error || !data) throw new Error("데이터 없음");
+
+        // --- [데이터 가공] ---
         
-        .header-left { text-align: left; flex: 1; }
-        .story-title { font-size: 2.2rem; font-weight: 800; color: #222; margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
-        .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 10px; }
+        // 1. 이미지 (DB: "주소1, 주소2" -> JS: ["주소1", "주소2"])
+        const images = data.page_images 
+            ? data.page_images.split(',').map(s => s.trim()) 
+            : [data.thumbnail_url];
 
-        .play-all-btn {
-            background-color: #eee; color: #555; border: none; padding: 12px 24px; border-radius: 50px;
-            font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
-            transition: all 0.2s; white-space: nowrap; visibility: hidden; /* 기본 숨김 */
-        }
-        .play-all-btn.active { visibility: visible; } /* JS로 보임 처리 */
-        .play-all-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(93,95,239,0.4); } 70% { box-shadow: 0 0 0 10px rgba(0,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
+        // 2. 문장 (DB: "문장1|||문장2" -> JS: ["문장1", "문장2"])
+        const texts = data.content 
+            ? data.content.split('|||').map(s => s.trim()) 
+            : [];
 
-        /* --- 콘텐츠 영역 (좌: 그림 / 우: 가변 내용) --- */
-        .content-wrapper {
-            flex: 1; display: flex; gap: 40px; margin-bottom: 20px;
-            align-items: flex-start; /* 상단 정렬 */
-        }
-
-        /* 왼쪽: 그림 (항상 고정 위치) */
-        .image-area {
-            flex: 1; width: 100%; border-radius: 20px; overflow: hidden;
-            display: flex; justify-content: center; align-items: center; background: #fff;
-        }
-        .story-img { width: 100%; height: auto; border-radius: 20px; display: block; }
-
-        /* ★ 오른쪽: 동적 콘텐츠 영역 (JS가 내용을 갈아끼우는 곳) ★ */
-        .dynamic-content-area {
-            flex: 1; width: 100%; 
-            display: flex; flex-direction: column; justify-content: center; min-height: 400px;
+        // 3. 단어 (DB: "kid, pet, pig" -> JS: ["kid", "pet", "pig"])
+        // ★ 여기가 중요합니다. Story 2를 부르면 Story 2의 단어가 자동으로 들어옵니다.
+        let words = [];
+        if (data.words) {
+            // DB에 단어가 콤마(,)로 적혀있든 배열이든 알아서 처리
+            words = typeof data.words === 'string' 
+                ? data.words.split(',').map(w => w.trim()) 
+                : data.words;
+        } else {
+            // DB에 단어가 없으면 빈 배열 (화면에 아무것도 안 뜸)
+            console.warn("이 스토리에 등록된 단어가 없습니다.");
         }
 
-        /* [모드 1] 문장 스타일 */
-        .mode-sentence {
-            font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6;
-            background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%; text-align: left;
+        // 4. 제목 정리 (Story 1. Story 1... 중복 방지)
+        let cleanTitle = data.title;
+        const prefix = `Story ${data.sort_order}`;
+        if (!cleanTitle.toLowerCase().startsWith('story')) {
+            cleanTitle = `${prefix}. ${cleanTitle}`;
         }
 
-        /* [모드 2] 단어 카드 스타일 */
-        .mode-word-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;
-        }
-        .word-card {
-            background: #fff; border: 2px solid #f0f0f0; border-radius: 12px; padding: 12px 16px;
-            font-size: 1.1rem; font-weight: 700; color: #444; cursor: pointer; transition: all 0.2s;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
-        .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
-
-        /* 하단 버튼 */
-        .nav-controls { margin-top: auto; display: flex; gap: 20px; width: 100%; justify-content: center; }
-        .nav-btn { padding: 15px 40px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-width: 120px; }
-        .nav-btn.prev { background: #f1f3f5; color: #666; }
-        .nav-btn.next { background: #5D5FEF; color: white; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        /* 모바일 대응 */
-        @media (max-width: 768px) {
-            .viewer-container { padding: 20px; border-radius: 0; min-height: 100vh; }
-            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
-            .content-wrapper { flex-direction: column; }
-            .play-all-btn { width: 100%; justify-content: center; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="viewer-container">
-        <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
-        <audio id="bg-audio"></audio> <header class="story-header">
-            <div class="header-left">
-                <h1 id="title-el" class="story-title">Loading...</h1>
-                <div id="page-el" class="page-indicator">Page 1</div>
-            </div>
-            <button id="audio-btn-el" class="play-all-btn" onclick="toggleFullAudio()">
-                <span>🔊 전체 듣기</span>
-            </button>
-        </header>
-
-        <div class="content-wrapper">
-            <div class="image-area">
-                <img id="img-el" src="" alt="Scene" class="story-img">
-            </div>
-            
-            <div id="dynamic-content" class="dynamic-content-area"></div>
-        </div>
-
-        <div class="nav-controls">
-            <button id="prev-btn" class="nav-btn prev" onclick="movePage(-1)">Previous</button>
-            <button id="next-btn" class="nav-btn next" onclick="movePage(1)">Next</button>
-        </div>
-    </div>
-
-    <script>
-        const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // --- 전역 변수 (State) ---
-        let state = {
-            data: null,      // DB 데이터
-            currentPage: 0,  // 현재 페이지 (0:단어장, 1~N:스토리)
-            totalPages: 0
+        // --- 상태 저장 ---
+        state.processedData = {
+            title: cleanTitle,
+            images: images,
+            texts: texts,
+            words: words,
+            audioUrl: data.audio_url
         };
+        
+        state.totalPages = 1 + Math.max(images.length, texts.length);
 
-        // --- 초기화 ---
-        document.addEventListener('DOMContentLoaded', init);
-
-        async function init() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            if(!id) return alert("잘못된 접근");
-
-            // 1. DB 가져오기
-            const { data, error } = await supabase.from('stories').select('*').eq('sort_order', id).single();
-            if(error || !data) return alert("데이터 로딩 실패");
-
-            // 2. 데이터 가공 (이미지 배열, 문장 배열, 단어 배열)
-            const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
-            const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
-            let words = ["ant", "apple", "egg", "elf", "owl", "ox", "up", "upset", "it", "bed", "bell"]; // 기본값
-            
-            if(data.words) {
-                words = typeof data.words === 'string' ? data.words.split(',').map(w=>w.trim()) : data.words;
-            }
-
-            // 3. 상태 저장
-            state.data = { ...data, images, texts, words };
-            state.totalPages = 1 + Math.max(images.length, texts.length);
-
-            // 4. 오디오 설정
-            if(state.data.audio_url) document.getElementById('bg-audio').src = state.data.audio_url;
-
-            // 5. 첫 페이지 렌더링
-            render();
+        // 오디오 준비
+        if (state.processedData.audioUrl) {
+            document.getElementById('bg-audio').src = state.processedData.audioUrl;
         }
 
-        // --- 핵심 렌더링 함수 (View Update) ---
-        function render() {
-            const { currentPage, totalPages, data } = state;
+        // 화면 그리기 시작
+        renderView();
 
-            // 1. 제목 처리 (중복 제거)
-            let title = data.title;
-            if(!title.toLowerCase().startsWith('story')) title = `Story ${data.sort_order}. ${title}`;
-            document.getElementById('title-el').innerText = title;
-            document.getElementById('page-el').innerText = `Page ${currentPage + 1} / ${totalPages}`;
+    } catch (err) {
+        console.error(err);
+        alert("이야기를 불러올 수 없습니다. (DB를 확인해주세요)");
+    }
+}
 
-            // 2. 버튼 표시 (0페이지면 보임)
-            const audioBtn = document.getElementById('audio-btn-el');
-            if(currentPage === 0) audioBtn.classList.add('active');
-            else audioBtn.classList.remove('active');
+// ==========================================
+// 5. 화면 그리기 (Render)
+// ==========================================
+function renderView() {
+    const { currentPage, totalPages, processedData } = state;
+    
+    // 제목 & 페이지 번호
+    document.getElementById('title-el').innerText = processedData.title;
+    document.getElementById('page-el').innerText = `Page ${currentPage + 1} / ${totalPages}`;
 
-            // 3. 네비게이션 버튼 상태
-            document.getElementById('prev-btn').disabled = currentPage === 0;
-            const nextBtn = document.getElementById('next-btn');
-            nextBtn.innerText = currentPage === totalPages - 1 ? "Finish" : "Next";
-            nextBtn.onclick = currentPage === totalPages - 1 ? () => history.back() : () => movePage(1);
+    // 전체 듣기 버튼 (0페이지 & 오디오 있을 때만 보임)
+    const audioBtn = document.getElementById('audio-btn-el');
+    if (currentPage === 0 && processedData.audioUrl) {
+        audioBtn.classList.add('active'); 
+    } else {
+        audioBtn.classList.remove('active');
+    }
 
-            // ★ 4. 동적 콘텐츠 교체 (여기가 핵심!) ★
-            const contentBox = document.getElementById('dynamic-content');
-            const imgEl = document.getElementById('img-el');
+    // 버튼 상태
+    document.getElementById('prev-btn').disabled = (currentPage === 0);
+    const nextBtn = document.getElementById('next-btn');
+    
+    if (currentPage === totalPages - 1) {
+        nextBtn.innerText = "Finish";
+        nextBtn.onclick = () => history.back();
+    } else {
+        nextBtn.innerText = "Next";
+        nextBtn.onclick = () => changePage(1);
+    }
 
-            // 그림 업데이트
-            const imgIndex = currentPage === 0 ? 0 : currentPage - 1;
-            imgEl.src = data.images[imgIndex] || '';
+    // --- 내용 갈아끼우기 ---
+    const imgEl = document.getElementById('img-el');
+    const contentBox = document.getElementById('dynamic-content');
 
-            // 내용 업데이트 (JS로 HTML 생성)
-            if (currentPage === 0) {
-                // [Mode: Words] 단어장 그리기
-                contentBox.innerHTML = createWordGridHTML(data.words);
-            } else {
-                // [Mode: Sentence] 문장 그리기
-                const sentence = data.texts[currentPage - 1] || "...";
-                contentBox.innerHTML = `<div class="mode-sentence">${sentence}</div>`;
-            }
-        }
+    // 이미지
+    const imgIndex = currentPage === 0 ? 0 : currentPage - 1;
+    imgEl.src = processedData.images[imgIndex] || processedData.images[0] || '';
 
-        // --- HTML 생성 헬퍼 함수 ---
-        function createWordGridHTML(words) {
-            let html = '<div class="mode-word-grid">';
-            words.forEach(word => {
-                html += `
-                    <div class="word-card" onclick="playWordSound('${word}')">
-                        ${word}
-                    </div>
-                `;
-            });
-            html += '</div>';
-            return html;
-        }
+    // 내용 (단어장 vs 문장)
+    if (currentPage === 0) {
+        // 0페이지: 단어장 그리기
+        contentBox.innerHTML = generateWordGrid(processedData.words);
+    } else {
+        // 나머지: 문장 보여주기
+        const sentence = processedData.texts[currentPage - 1] || "";
+        contentBox.innerHTML = `<div class="mode-sentence">${sentence}</div>`;
+    }
+}
 
-        // --- 이벤트 핸들러 ---
-        function movePage(step) {
-            const next = state.currentPage + step;
-            if(next >= 0 && next < state.totalPages) {
-                state.currentPage = next;
-                render();
-            }
-        }
+// ==========================================
+// 6. 단어장 HTML 생성기
+// ==========================================
+function generateWordGrid(wordList) {
+    if (!wordList || wordList.length === 0) {
+        return '<div style="color:#999;">등록된 단어가 없습니다.</div>';
+    }
 
-        function toggleFullAudio() {
-            const audio = document.getElementById('bg-audio');
-            const btn = document.getElementById('audio-btn-el');
-            
-            if(!audio.src) return alert("오디오 준비 중입니다.");
+    let html = '<div class="mode-word-grid">';
+    wordList.forEach(word => {
+        // 단어 카드를 클릭하면 playWordSound 함수 실행
+        html += `
+            <div class="word-card" onclick="playWordSound('${word}')">
+                ${word}
+            </div>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
 
-            if(audio.paused) {
-                audio.play();
-                btn.innerHTML = "⏸ 듣기 중단";
-                btn.classList.add('playing');
-            } else {
-                audio.pause();
-                btn.innerHTML = "🔊 전체 듣기";
-                btn.classList.remove('playing');
-            }
-        }
+// ==========================================
+// 7. 기능 함수들
+// ==========================================
 
-        function playWordSound(word) {
-            const cleanWord = word.trim().toLowerCase();
-            new Audio(`audio/${cleanWord}.mp3`).play();
-        }
-    </script>
-</body>
-</html>
+// 페이지 이동
+function changePage(step) {
+    const next = state.currentPage + step;
+    if (next >= 0 && next < state.totalPages) {
+        state.currentPage = next;
+        renderView();
+    }
+}
+
+// 전체 듣기
+function toggleFullAudio() {
+    const audio = document.getElementById('bg-audio');
+    const btn = document.getElementById('audio-btn-el');
+
+    if (!state.processedData.audioUrl) return;
+
+    if (audio.paused) {
+        audio.play();
+        btn.innerHTML = "⏸ 듣기 중단";
+        btn.classList.add('playing');
+    } else {
+        audio.pause();
+        btn.innerHTML = "🔊 전체 듣기";
+        btn.classList.remove('playing');
+    }
+}
+
+// 단어 개별 듣기
+function playWordSound(word) {
+    // 파일명 규칙: 소문자로 변환 (Ant -> ant.mp3)
+    const cleanWord = word.trim().toLowerCase();
+    const audio = new Audio(`audio/${cleanWord}.mp3`);
+    audio.play().catch(e => console.log('단어 음원 없음:', cleanWord));
+}
