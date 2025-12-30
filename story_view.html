@@ -1,308 +1,221 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Story View - Blossom English</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story View - Blossom English</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
-        body {
-            background: #f4f6fb;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+  <!-- ✅ 로컬 스토리 데이터 fallback 용 (필요 없으면 제거 가능) -->
+  <script src="./data.js"></script>
 
-        .viewer-container {
-            width: 100%;
-            max-width: 950px;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            min-height: 600px;
-        }
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
+    body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-        /* ===== 상단 버튼 ===== */
-        .top-buttons {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 20;
-        }
+    .viewer-container {
+      width: 100%;
+      max-width: 950px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .top-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-            background: #f1f3f5;
-            color: #555;
-        }
+    /* ✅ 오른쪽 위 3버튼 */
+    .top-actions {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      display: flex;
+      gap: 10px;
+      z-index: 30;
+    }
+    .top-actions button {
+      border: none;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+    .top-actions button:hover { transform: translateY(-1px); filter: brightness(0.98); }
+    .btn-home { background: #dbeafe; color: #1d4ed8; }
+    .btn-retry { background: #ede9fe; color: #5b21b6; }
+    .btn-back { background: #fee2e2; color: #991b1b; }
 
-        .top-btn.home { background: #dbeafe; color: #1d4ed8; }
-        .top-btn.retry { background: #ede9fe; color: #5b21b6; }
-        .top-btn.back { background: #fee2e2; color: #991b1b; }
+    /* --- 헤더 --- */
+    .story-header {
+      margin-bottom: 30px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      width: 100%;
+      padding-right: 220px; /* ✅ 오른쪽 상단 버튼 영역 확보 */
+      border-bottom: 2px solid #f4f6fb;
+      padding-bottom: 15px;
+    }
 
-        /* ===== 헤더 ===== */
-        .story-header {
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f4f6fb;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
+    .header-left { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+    .story-title { font-size: 2rem; font-weight: 800; color: #222; line-height: 1.1; word-break: keep-all; letter-spacing: -0.5px; }
+    .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 8px; }
 
-        .header-left { display: flex; flex-direction: column; }
+    .play-all-btn {
+      background-color: #eee; color: #555;
+      border: none; padding: 10px 24px; border-radius: 50px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.2s; white-space: nowrap;
+      margin-bottom: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .play-all-btn:hover { background-color: #e0e0e0; transform: scale(1.03); }
+    .play-all-btn.playing { background-color: #5D5FEF; color: white; box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3); }
 
-        .story-title {
-            font-size: 2rem;
-            font-weight: 800;
-        }
+    /* --- 콘텐츠 영역 --- */
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 20px;
+    }
 
-        .page-indicator {
-            margin-top: 6px;
-            color: #888;
-            font-weight: 600;
-        }
+    /* ✅ 노란 영역(이미지) */
+    .image-area {
+      flex: 1;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 360px;
+      position: relative;
+    }
+    .story-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* ✅ 전자책 느낌: 잘리지 않게 */
+      display: block;
+      background: #fff;
+    }
+    .img-placeholder {
+      position: absolute;
+      inset: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      color: #aaa;
+      background: repeating-linear-gradient(
+        45deg,
+        #fafafa,
+        #fafafa 10px,
+        #f5f5f5 10px,
+        #f5f5f5 20px
+      );
+    }
 
-        .play-all-btn {
-            background: #eee;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 50px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+    /* 오른쪽 텍스트 */
+    .text-area { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; }
 
-        .play-all-btn.playing {
-            background: #5D5FEF;
-            color: white;
-        }
+    .story-text {
+      font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6; word-break: keep-all;
+      background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%;
+      text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
 
-        /* ===== 콘텐츠 ===== */
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            gap: 40px;
-        }
+    .word-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; padding: 5px; }
+    .word-card {
+      background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
+      padding: 12px 16px; font-size: 1.1rem; font-weight: 800; color: #444;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
+    .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
 
-        .image-area {
-            flex: 1;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #fafafa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    .nav-controls { margin-top: auto; display: flex; justify-content: center; gap: 20px; width: 100%; }
+    .nav-btn {
+      padding: 15px 40px; border: none; border-radius: 12px;
+      font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: 0.2s; min-width: 120px;
+    }
+    .nav-btn.prev { background: #f1f3f5; color: #666; }
+    .nav-btn.prev:hover { background: #e9ecef; }
+    .nav-btn.next { background: #5D5FEF; color: white; }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-btn.next:hover:not(:disabled) { background: #4A4CD0; transform: scale(1.03); }
 
-        .story-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .image-placeholder {
-            color: #aaa;
-            font-size: 1.2rem;
-        }
-
-        .text-area {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .story-text {
-            background: #FFFDE7;
-            padding: 30px;
-            border-radius: 20px;
-            font-size: 1.8rem;
-            font-weight: 600;
-            line-height: 1.6;
-            width: 100%;
-        }
-
-        .word-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .word-card {
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 2px solid #eee;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .word-card:hover {
-            border-color: #5D5FEF;
-            color: #5D5FEF;
-        }
-
-        .nav-controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .nav-btn {
-            padding: 15px 40px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .nav-btn.prev { background: #f1f3f5; }
-        .nav-btn.next { background: #5D5FEF; color: white; }
-    </style>
+    @media (max-width: 768px) {
+      body { padding: 0; }
+      .viewer-container { padding: 18px; max-width: 100%; border-radius: 0; min-height: 100vh; }
+      .content-wrapper { flex-direction: column; gap: 18px; }
+      .story-header { flex-direction: column; align-items: flex-start; gap: 12px; padding-right: 0; }
+      .top-actions { top: 10px; right: 10px; gap: 8px; }
+      .top-actions button { padding: 9px 12px; font-size: 0.9rem; }
+      .play-all-btn { width: 100%; justify-content: center; }
+      .nav-controls { gap: 10px; }
+      .nav-btn { flex: 1; padding: 15px; }
+      .image-area { min-height: 260px; }
+    }
+  </style>
 </head>
 
 <body>
-<div class="viewer-container">
-
-    <!-- 상단 버튼 -->
-    <div class="top-buttons">
-        <button class="top-btn home" onclick="goHome()">Home</button>
-        <button class="top-btn retry" onclick="restartStory()">다시풀기</button>
-        <button class="top-btn back" onclick="history.back()">돌아가기</button>
+  <div class="viewer-container">
+    <!-- ✅ 목록으로 제거하고 3버튼 -->
+    <div class="top-actions">
+      <button class="btn-home" onclick="goHome()">Home</button>
+      <button class="btn-retry" onclick="restartStory()">다시풀기</button>
+      <button class="btn-back" onclick="goBack()">돌아가기</button>
     </div>
 
     <audio id="bg-audio"></audio>
 
     <header class="story-header">
-        <div class="header-left">
-            <h1 id="display-title" class="story-title">Loading...</h1>
-            <div id="page-indicator" class="page-indicator"></div>
-        </div>
-        <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">🔊 Story Full Audio</button>
+      <div class="header-left">
+        <h1 id="display-title" class="story-title">Loading...</h1>
+        <div id="page-indicator" class="page-indicator">- / -</div>
+      </div>
+
+      <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
+        <span>🔊 Story Full Audio</span>
+      </button>
     </header>
 
     <div class="content-wrapper">
-        <div class="image-area" id="image-area">
-            <img id="story-img" class="story-img" />
-            <div id="image-placeholder" class="image-placeholder" style="display:none;">
-                이미지 준비중
-            </div>
-        </div>
+      <div class="image-area">
+        <img id="story-img" src="" alt="Story Scene" class="story-img" />
+        <div id="img-placeholder" class="img-placeholder">이미지 준비중</div>
+      </div>
 
-        <div id="text-area" class="text-area"></div>
+      <div id="text-area" class="text-area"></div>
     </div>
 
     <div class="nav-controls">
-        <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
-        <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
+      <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
+      <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
     </div>
-</div>
+  </div>
 
-<script>
-const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
-const SUPABASE_KEY = 'YOUR_KEY';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let storyData = {};
-let currentPage = 0;
-let totalPages = 0;
-
-const bgAudio = document.getElementById('bg-audio');
-const playBtn = document.getElementById('header-play-btn');
-
-document.addEventListener('DOMContentLoaded', loadStory);
-
-async function loadStory() {
-    const id = new URLSearchParams(location.search).get('id');
-    const { data } = await supabaseClient.from('stories').select('*').eq('sort_order', id).single();
-
-    storyData = {
-        title: data.title,
-        number: data.sort_order,
-        images: data.page_images.split(',').map(v => v.trim()),
-        texts: data.content.split('|||').map(v => v.trim()),
-        words: data.words?.split(',') || [],
-        audioUrl: data.audio_url
-    };
-
-    if (storyData.audioUrl) bgAudio.src = storyData.audioUrl;
-    totalPages = 1 + storyData.texts.length;
-    renderPage(0);
-}
-
-function renderPage(index) {
-    currentPage = index;
-    document.getElementById('display-title').innerText =
-        `Story ${storyData.number}. ${storyData.title}`;
-    document.getElementById('page-indicator').innerText =
-        `Page ${index + 1} / ${totalPages}`;
-
-    const img = document.getElementById('story-img');
-    const placeholder = document.getElementById('image-placeholder');
-    const text = document.getElementById('text-area');
-
-    if (storyData.images[index]) {
-        img.src = storyData.images[index];
-        img.style.display = 'block';
-        placeholder.style.display = 'none';
-    } else {
-        img.style.display = 'none';
-        placeholder.style.display = 'block';
-    }
-
-    if (index === 0) {
-        text.innerHTML = `<div class="word-grid">
-            ${storyData.words.map(w => `<div class="word-card">${w}</div>`).join('')}
-        </div>`;
-    } else {
-        text.innerHTML = `<div class="story-text">${storyData.texts[index - 1]}</div>`;
-    }
-
-    document.getElementById('btn-prev').disabled = index === 0;
-}
-
-function changePage(step) {
-    const next = currentPage + step;
-    if (next >= 0 && next < totalPages) renderPage(next);
-}
-
-function toggleFullAudio() {
-    if (bgAudio.paused) {
-        bgAudio.play();
-        playBtn.classList.add('playing');
-        playBtn.innerText = '⏸ Pause';
-    } else {
-        bgAudio.pause();
-        playBtn.classList.remove('playing');
-        playBtn.innerText = '🔊 Story Full Audio';
-    }
-}
-
-function restartStory() {
-    renderPage(0);
-}
-
-function goHome() {
-    location.href = 'story_list.html';
-}
-</script>
+  <script src="./story_view.js"></script>
 </body>
 </html>
