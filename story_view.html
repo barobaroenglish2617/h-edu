@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story View - Blossom English</title>
     <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="data.js"></script>
 
     <style>
+        /* --- 스타일 (디자인) --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
         body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
@@ -22,36 +20,21 @@
             min-height: 600px; display: flex; flex-direction: column;
         }
 
-        /* --- ★ 상단 버튼 그룹 (Home / 돌아가기) ★ --- */
-        .top-buttons {
-            position: absolute; top: 30px; right: 40px;
-            display: flex; gap: 10px; z-index: 20;
+        .close-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: #f1f3f5; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 20;
         }
 
-        .action-btn {
-            border: none; padding: 10px 24px; border-radius: 50px;
-            font-size: 0.95rem; font-weight: 700; color: white;
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.15); }
-
-        /* 초록색 Home 버튼 */
-        .btn-home { background-color: #8DD986; } 
-        /* 분홍색 돌아가기 버튼 */
-        .btn-back { background-color: #FF8BA7; }
-
-        /* 헤더 */
         .story-header { 
             display: flex; justify-content: space-between; align-items: flex-end;
             width: 100%; padding-bottom: 20px; border-bottom: 2px solid #f8f9fa; margin-bottom: 30px;
-            padding-right: 200px; /* 버튼과 겹치지 않게 여백 */
+            padding-right: 60px;
         }
         .header-left { text-align: left; flex: 1; }
         .story-title { font-size: 2.2rem; font-weight: 800; color: #222; margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
         .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 10px; }
 
-        /* 오디오 버튼 */
         .play-all-btn {
             background-color: #eee; color: #555; border: none; padding: 12px 24px; border-radius: 50px;
             font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -61,7 +44,6 @@
         .play-all-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(93,95,239,0.4); } 70% { box-shadow: 0 0 0 10px rgba(0,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
 
-        /* 콘텐츠 */
         .content-wrapper {
             flex: 1; display: flex; gap: 40px; margin-bottom: 20px;
             align-items: flex-start;
@@ -69,7 +51,6 @@
         .image-area {
             flex: 1; width: 100%; border-radius: 20px; overflow: hidden;
             display: flex; justify-content: center; align-items: center; background: #fff;
-            min-height: 300px; /* 이미지 로딩 전 최소 높이 */
         }
         .story-img { width: 100%; height: auto; border-radius: 20px; display: block; }
         
@@ -101,7 +82,7 @@
 
         @media (max-width: 768px) {
             .viewer-container { padding: 20px; border-radius: 0; min-height: 100vh; }
-            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; margin-top: 50px; }
+            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
             .content-wrapper { flex-direction: column; }
             .play-all-btn { width: 100%; justify-content: center; }
         }
@@ -110,11 +91,7 @@
 <body>
 
     <div class="viewer-container">
-        <div class="top-buttons">
-            <button class="action-btn btn-home" onclick="goHome()">Home</button>
-            <button class="action-btn btn-back" onclick="history.back()">돌아가기</button>
-        </div>
-
+        <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
         <audio id="bg-audio"></audio>
 
         <header class="story-header">
