@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story View - Blossom English</title>
     <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="data.js"></script>
 
     <style>
-        /* --- 공통 스타일 --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
         body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
@@ -28,7 +29,7 @@
         }
 
         .action-btn {
-            border: none; padding: 8px 20px; border-radius: 50px;
+            border: none; padding: 10px 24px; border-radius: 50px;
             font-size: 0.95rem; font-weight: 700; color: white;
             cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -40,11 +41,11 @@
         /* 분홍색 돌아가기 버튼 */
         .btn-back { background-color: #FF8BA7; }
 
-        /* --- 헤더 --- */
+        /* 헤더 */
         .story-header { 
             display: flex; justify-content: space-between; align-items: flex-end;
             width: 100%; padding-bottom: 20px; border-bottom: 2px solid #f8f9fa; margin-bottom: 30px;
-            padding-right: 180px; /* 버튼들과 겹치지 않게 여백 확보 */
+            padding-right: 200px; /* 버튼과 겹치지 않게 여백 */
         }
         .header-left { text-align: left; flex: 1; }
         .story-title { font-size: 2.2rem; font-weight: 800; color: #222; margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
@@ -60,7 +61,7 @@
         .play-all-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(93,95,239,0.4); } 70% { box-shadow: 0 0 0 10px rgba(0,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
 
-        /* --- 콘텐츠 --- */
+        /* 콘텐츠 */
         .content-wrapper {
             flex: 1; display: flex; gap: 40px; margin-bottom: 20px;
             align-items: flex-start;
@@ -68,6 +69,7 @@
         .image-area {
             flex: 1; width: 100%; border-radius: 20px; overflow: hidden;
             display: flex; justify-content: center; align-items: center; background: #fff;
+            min-height: 300px; /* 이미지 로딩 전 최소 높이 */
         }
         .story-img { width: 100%; height: auto; border-radius: 20px; display: block; }
         
@@ -99,7 +101,7 @@
 
         @media (max-width: 768px) {
             .viewer-container { padding: 20px; border-radius: 0; min-height: 100vh; }
-            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; margin-top: 50px; } /* 버튼 공간 확보 */
+            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; margin-top: 50px; }
             .content-wrapper { flex-direction: column; }
             .play-all-btn { width: 100%; justify-content: center; }
         }
