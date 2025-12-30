@@ -22,10 +22,51 @@
             min-height: 600px; display: flex; flex-direction: column;
         }
 
-        /* ✅ 오른쪽 위 3버튼 */
+        /* --- ★ 헤더 영역 --- */
+        .story-header {
+            margin-bottom: 30px; margin-top: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;     /* ✅ 제목 줄과 버튼 라인 맞춤 */
+            justify-content: space-between;
+            width: 100%;
+            border-bottom: 2px solid #f4f6fb;
+            padding-bottom: 15px;
+            gap: 16px;
+        }
+
+        /* 왼쪽: 제목 그룹 */
+        .header-left {
+            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+            min-width: 0;
+        }
+
+        .story-title {
+            font-size: 2rem; font-weight: 800; color: #222; margin: 0;
+            line-height: 1.1; word-break: keep-all; letter-spacing: -0.5px;
+        }
+
+        .page-indicator {
+            font-size: 1rem; color: #888; font-weight: 600; margin-top: 8px;
+        }
+
+        /* ✅ 오른쪽: 3버튼 + 전체듣기 */
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* ✅ 3버튼(헤더 안에서 제목 줄 맞춤) */
         .top-actions {
-            position: absolute; top: 18px; right: 18px;
-            display: flex; gap: 10px; z-index: 30;
+            position: static;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: auto;
         }
         .top-actions button {
             border: none; padding: 10px 16px; border-radius: 999px;
@@ -38,32 +79,6 @@
         .btn-home { background: #dbeafe; color: #1d4ed8; }
         .btn-retry { background: #ede9fe; color: #5b21b6; }
         .btn-back { background: #fee2e2; color: #991b1b; }
-
-        /* --- ★ 헤더 영역 --- */
-        .story-header {
-            margin-bottom: 30px; margin-top: 10px;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-end;
-            justify-content: space-between;
-            width: 100%;
-            padding-right: 220px; /* ✅ 상단 3버튼 영역 확보 */
-            border-bottom: 2px solid #f4f6fb;
-            padding-bottom: 15px;
-        }
-
-        .header-left {
-            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
-        }
-
-        .story-title {
-            font-size: 2rem; font-weight: 800; color: #222; margin: 0;
-            line-height: 1.1; word-break: keep-all; letter-spacing: -0.5px;
-        }
-
-        .page-indicator {
-            font-size: 1rem; color: #888; font-weight: 600; margin-top: 8px;
-        }
 
         /* 오른쪽: 전체 듣기 버튼 */
         .play-all-btn {
@@ -159,11 +174,12 @@
         @media (max-width: 768px) {
             .viewer-container { padding: 20px; max-width: 100%; border-radius: 0; min-height: 100vh; }
             .content-wrapper { flex-direction: column; gap: 20px; }
-            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
+            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header-right { width: 100%; align-items: flex-start; }
+            .top-actions { width: 100%; flex-wrap: wrap; }
             .play-all-btn { width: 100%; justify-content: center; }
             .nav-controls { gap: 10px; }
             .nav-btn { flex: 1; padding: 15px; }
-            .top-actions { top: 10px; right: 10px; gap: 8px; }
             .top-actions button { padding: 9px 12px; font-size: 0.9rem; }
         }
     </style>
@@ -171,13 +187,6 @@
 <body>
 
     <div class="viewer-container">
-        <!-- ✅ 목록으로 제거 -> 3버튼 -->
-        <div class="top-actions">
-            <button class="btn-home" onclick="goHome()">Home</button>
-            <button class="btn-retry" onclick="restartStory()">다시풀기</button>
-            <button class="btn-back" onclick="goBack()">돌아가기</button>
-        </div>
-
         <audio id="bg-audio"></audio>
 
         <header class="story-header">
@@ -186,9 +195,17 @@
                 <div id="page-indicator" class="page-indicator">- / -</div>
             </div>
 
-            <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
-                <span>🔊 Story Full Audio</span>
-            </button>
+            <div class="header-right">
+                <div class="top-actions">
+                    <button class="btn-home" onclick="goHome()">Home</button>
+                    <button class="btn-retry" onclick="restartStory()">다시풀기</button>
+                    <button class="btn-back" onclick="goBack()">돌아가기</button>
+                </div>
+
+                <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
+                    <span>🔊 Story Full Audio</span>
+                </button>
+            </div>
         </header>
 
         <div class="content-wrapper">
@@ -254,7 +271,7 @@
                     return;
                 }
 
-                // ✅ page_images: "1-1.png,1-2.png,..." 형태면 public url로 변환
+                // page_images: "1-1.png,1-2.png,..." 형태면 public url로 변환
                 const rawImages = data.page_images
                     ? data.page_images.split(',').map(s => s.trim()).filter(Boolean)
                     : (data.thumbnail_url ? [data.thumbnail_url] : []);
@@ -281,11 +298,9 @@
                     audioUrl: data.audio_url
                 };
 
-                if (storyData.audioUrl) {
-                    bgAudio.src = storyData.audioUrl;
-                }
+                if (storyData.audioUrl) bgAudio.src = storyData.audioUrl;
 
-                // ✅ 총 페이지: 0(단어장) + 스토리 페이지 수
+                // 총 페이지: 0(단어장) + 스토리 페이지 수
                 totalPages = 1 + Math.max(storyData.images.length, storyData.texts.length);
 
                 renderPage(0);
@@ -310,8 +325,6 @@
 
             // 오디오 버튼: 첫 페이지 + 오디오 있을 때만 보임
             if (index === 0 && storyData.audioUrl) {
-                playBtn.style.visibility = 'visible';
-                playBtn.style.opacity = '1';
                 playBtn.style.display = 'flex';
             } else {
                 playBtn.style.display = 'none';
@@ -323,9 +336,7 @@
             const imgEl = document.getElementById('story-img');
             const textEl = document.getElementById('text-area');
 
-            // ✅ 이미지 선택
-            // - 0페이지(단어장): 첫 이미지(커버) 보여주기
-            // - 스토리 페이지: index-1에 해당하는 이미지, 없으면 커버
+            // 이미지 선택
             let imgSrc = '';
             if (index === 0) {
                 imgSrc = storyData.images[0] || '';
@@ -387,17 +398,10 @@
             audio.play();
         }
 
-        // ✅ 상단 버튼 동작
-        function restartStory() {
-            renderPage(0);
-        }
-        function goBack() {
-            history.back();
-        }
-        function goHome() {
-            // 프로젝트 홈/목록 페이지로 바꿔도 됨
-            window.location.href = 'index.html';
-        }
+        // 상단 버튼 동작
+        function restartStory() { renderPage(0); }
+        function goBack() { history.back(); }
+        function goHome() { window.location.href = 'index.html'; }
     </script>
 </body>
 </html>
