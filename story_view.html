@@ -17,7 +17,7 @@
             width: 100%; max-width: 900px;
             background: white; border-radius: 24px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 40px; text-align: center;
+            padding: 40px; 
             position: relative; overflow: hidden;
             min-height: 600px; display: flex; flex-direction: column;
         }
@@ -25,50 +25,55 @@
         .close-btn {
             position: absolute; top: 20px; right: 20px;
             background: #f1f3f5; border: none; padding: 8px 16px;
-            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 10;
+            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 20;
         }
 
-        /* --- 헤더 --- */
+        /* --- ★ 헤더 영역 수정 (좌측 제목 / 우측 버튼) --- */
         .story-header { 
-            margin-bottom: 20px; margin-top: 10px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin-bottom: 30px; margin-top: 10px; 
+            display: flex; 
+            flex-direction: row; /* 가로 배치 */
+            align-items: center; /* 수직 중앙 정렬 */
+            justify-content: space-between; /* 양쪽 끝으로 벌림 */
+            width: 100%;
+            padding-right: 60px; /* 닫기 버튼과의 간격 확보 */
         }
         
-        .title-row {
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            margin-bottom: 5px;
+        /* 제목과 페이지 번호를 묶는 왼쪽 그룹 */
+        .header-left {
+            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
         }
 
-        .story-title { font-size: 1.8rem; font-weight: 800; color: #222; margin: 0; word-break: keep-all; }
+        .story-title { 
+            font-size: 1.8rem; font-weight: 800; color: #222; margin: 0; 
+            line-height: 1.2; word-break: keep-all;
+        }
         
-        /* ★ 전체 듣기 버튼 스타일 */
+        .page-indicator { 
+            font-size: 0.95rem; color: #888; font-weight: 600; margin-top: 5px; 
+        }
+
+        /* 전체 듣기 버튼 (오른쪽 배치) */
         .play-all-btn {
             background-color: #eee; color: #555;
-            border: none; padding: 8px 16px; border-radius: 20px;
+            border: none; padding: 10px 20px; border-radius: 50px;
             font-size: 0.95rem; font-weight: 700; cursor: pointer; 
-            display: flex; align-items: center; gap: 6px;
-            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s; white-space: nowrap; /* 줄바꿈 방지 */
+            flex-shrink: 0; /* 버튼 크기 줄어들지 않게 고정 */
         }
         .play-all-btn:hover { background-color: #e0e0e0; transform: scale(1.05); }
         .play-all-btn.playing { 
-            background-color: #FF6B6B; color: white; /* 재생 중엔 빨간색(Stop 느낌) 또는 초록색 */
-            animation: pulse 2s infinite;
+            background-color: #5D5FEF; color: white; /* 재생 중 포인트 컬러 */
+            box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
         }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(255, 107, 107, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
-        }
-
-        .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 5px; }
 
         /* --- 콘텐츠 영역 (가로 배치) --- */
         .content-wrapper {
             flex: 1; 
             display: flex; 
-            flex-direction: row; /* PC: 가로 */
-            align-items: center; /* 수직 중앙 정렬 */
+            flex-direction: row; 
+            align-items: flex-start; /* 위쪽 라인 맞춤 */
             justify-content: center;
             gap: 40px; 
             margin-bottom: 20px;
@@ -88,8 +93,6 @@
             flex: 1; width: 100%; 
             display: flex; justify-content: center; align-items: center;
             flex-direction: column;
-            max-height: 500px; /* 너무 길어지면 스크롤 */
-            overflow-y: auto; /* 내용 많을 때 스크롤 */
         }
 
         /* 문장 스타일 */
@@ -102,17 +105,17 @@
         /* 단어 카드 그리드 (2열) */
         .word-grid { 
             display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; 
-            padding: 5px; /* 잘림 방지 여백 */
+            padding: 5px; 
         }
         .word-card {
             background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
-            padding: 12px 16px; font-size: 1.2rem; font-weight: 700; color: #444;
+            padding: 12px 16px; font-size: 1.1rem; font-weight: 700; color: #444;
             display: flex; justify-content: space-between; align-items: center;
             cursor: pointer; transition: all 0.2s;
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
         .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
-        .word-card::after { content: '🔊'; font-size: 1rem; opacity: 0.3; }
+        .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
 
         /* 네비게이션 버튼 */
         .nav-controls { margin-top: auto; display: flex; justify-content: center; gap: 20px; width: 100%; }
@@ -130,6 +133,8 @@
         @media (max-width: 768px) {
             .viewer-container { padding: 20px; max-width: 100%; border-radius: 0; min-height: 100vh; }
             .content-wrapper { flex-direction: column; gap: 20px; }
+            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
+            .play-all-btn { width: 100%; justify-content: center; } /* 모바일엔 버튼 꽉 차게 */
             .nav-controls { gap: 10px; }
             .nav-btn { flex: 1; padding: 15px; }
         }
@@ -142,13 +147,14 @@
         <audio id="bg-audio"></audio>
 
         <header class="story-header">
-            <div class="title-row">
+            <div class="header-left">
                 <h1 id="display-title" class="story-title">Loading...</h1>
-                <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
-                    <span>🔊 전체 듣기</span>
-                </button>
+                <div id="page-indicator" class="page-indicator">- / -</div>
             </div>
-            <div id="page-indicator" class="page-indicator">- / -</div>
+
+            <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
+                <span>🔊 전체 듣기</span>
+            </button>
         </header>
 
         <div class="content-wrapper">
@@ -196,20 +202,19 @@
             const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
             const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
             
-            // ★ 수정됨: 보여주고 싶은 모든 단어를 여기에 넣거나, DB에 콤마로 넣으세요!
-            // 현재는 DB에 값이 없을 때를 대비해 요청하신 목록을 기본값으로 넣었습니다.
+            // ★ 단어 데이터 업데이트 (요청하신 목록 반영)
             let words = [];
             if (data.words && typeof data.words === 'string') {
                 words = data.words.split(',').map(w => w.trim());
             } else if (data.words && Array.isArray(data.words)) {
                 words = data.words;
             } else {
-                // 임시 데이터 (요청하신 단어 목록)
+                // DB에 값이 없을 때 보여질 기본 데이터
                 words = ["ant", "apple", "egg", "elf", "owl", "ox", "up", "upset", "it", "bed", "bell"];
             }
 
             storyData = {
-                title: data.title, // 참고: DB 제목에 'Story 1'이 포함되어 있으면 화면에 'Story 1. Story 1' 처럼 보일 수 있습니다.
+                title: data.title,
                 number: data.sort_order,
                 images: images,
                 texts: texts,
@@ -228,6 +233,10 @@
         function renderPage(index) {
             currentPage = index;
             
+            // 제목 표시 (중복 방지를 위한 간단한 체크)
+            // 만약 DB 제목이 "Story 1"이고 번호도 1이면 "Story 1. Story 1"이 되므로
+            // 제목이 번호를 이미 포함하고 있는지 확인할 수도 있지만, 
+            // 일단 요청하신대로 번호+제목 형식을 유지합니다.
             document.getElementById('display-title').innerText = `Story ${storyData.number}. ${storyData.title}`;
             document.getElementById('page-indicator').innerText = `${currentPage + 1} / ${totalPages}`;
 
