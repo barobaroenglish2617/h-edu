@@ -6,10 +6,8 @@
     <title>Story View - Blossom English</title>
     <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
 
-    <script src="data.js"></script>
-
     <style>
-        /* --- 공통 스타일 --- */
+        /* --- 스타일 (디자인) --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
         body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
@@ -28,7 +26,6 @@
             border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 20;
         }
 
-        /* 헤더 */
         .story-header { 
             display: flex; justify-content: space-between; align-items: flex-end;
             width: 100%; padding-bottom: 20px; border-bottom: 2px solid #f8f9fa; margin-bottom: 30px;
@@ -38,7 +35,6 @@
         .story-title { font-size: 2.2rem; font-weight: 800; color: #222; margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
         .page-indicator { font-size: 1rem; color: #888; font-weight: 600; margin-top: 10px; }
 
-        /* 오디오 버튼 */
         .play-all-btn {
             background-color: #eee; color: #555; border: none; padding: 12px 24px; border-radius: 50px;
             font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -46,8 +42,8 @@
         }
         .play-all-btn.active { visibility: visible; }
         .play-all-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(93,95,239,0.4); } 70% { box-shadow: 0 0 0 10px rgba(0,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
 
-        /* 콘텐츠 영역 */
         .content-wrapper {
             flex: 1; display: flex; gap: 40px; margin-bottom: 20px;
             align-items: flex-start;
@@ -57,12 +53,12 @@
             display: flex; justify-content: center; align-items: center; background: #fff;
         }
         .story-img { width: 100%; height: auto; border-radius: 20px; display: block; }
+        
         .dynamic-content-area {
             flex: 1; width: 100%; 
             display: flex; flex-direction: column; justify-content: center; min-height: 400px;
         }
 
-        /* 문장 & 단어 */
         .mode-sentence {
             font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6;
             background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%; text-align: left;
@@ -78,7 +74,6 @@
         .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
         .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
 
-        /* 하단 버튼 */
         .nav-controls { margin-top: auto; display: flex; gap: 20px; width: 100%; justify-content: center; }
         .nav-btn { padding: 15px 40px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; min-width: 120px; }
         .nav-btn.prev { background: #f1f3f5; color: #666; }
@@ -86,6 +81,8 @@
         .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         @media (max-width: 768px) {
+            .viewer-container { padding: 20px; border-radius: 0; min-height: 100vh; }
+            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
             .content-wrapper { flex-direction: column; }
             .play-all-btn { width: 100%; justify-content: center; }
         }
@@ -120,99 +117,6 @@
         </div>
     </div>
 
-    <script>
-        let state = { data: null, currentPage: 0, totalPages: 0 };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const id = parseInt(params.get('id'));
-
-            // data.js가 제대로 로드되었는지 확인
-            if (typeof storiesData === 'undefined') {
-                alert("data.js 파일이 없습니다!"); 
-                return;
-            }
-
-            const story = storiesData.find(s => s.id === id);
-            if(!story) { alert("해당 이야기 데이터를 찾을 수 없습니다."); return; }
-
-            state.data = story;
-            state.totalPages = 1 + story.sentences.length; // 단어장(1) + 문장수
-            render();
-        });
-
-        function render() {
-            const { currentPage, totalPages, data } = state;
-
-            // 제목 설정 (Story 1. The sun is up)
-            document.getElementById('title-el').innerText = `Story ${data.id}. ${data.title}`;
-            document.getElementById('page-el').innerText = `Page ${currentPage + 1} / ${totalPages}`;
-
-            // 오디오 버튼 (0페이지에서만 보임)
-            const audioBtn = document.getElementById('audio-btn-el');
-            if(currentPage === 0) {
-                audioBtn.classList.add('active');
-                // 오디오 파일명 예: audio/story1.mp3
-                document.getElementById('bg-audio').src = `audio/story${data.id}.mp3`;
-            } else {
-                audioBtn.classList.remove('active');
-            }
-
-            // 이전/다음 버튼
-            document.getElementById('prev-btn').disabled = currentPage === 0;
-            const nextBtn = document.getElementById('next-btn');
-            nextBtn.innerText = currentPage === totalPages - 1 ? "Finish" : "Next";
-            nextBtn.onclick = currentPage === totalPages - 1 ? () => history.back() : () => movePage(1);
-
-            // 이미지 & 내용
-            const imgEl = document.getElementById('img-el');
-            const contentBox = document.getElementById('dynamic-content');
-
-            // 이미지 주소 (data.js에 있는 image 경로 사용)
-            imgEl.src = data.image; 
-            imgEl.onerror = function() { this.src = 'https://via.placeholder.com/400?text=No+Image'; }; // 이미지 없으면 회색박스
-
-            if (currentPage === 0) {
-                // [단어장]
-                let html = '<div class="mode-word-grid">';
-                data.words.forEach(word => {
-                    html += `<div class="word-card" onclick="playWordSound('${word}')">${word}</div>`;
-                });
-                html += '</div>';
-                contentBox.innerHTML = html;
-            } else {
-                // [문장]
-                const sentence = data.sentences[currentPage - 1];
-                contentBox.innerHTML = `<div class="mode-sentence">${sentence}</div>`;
-            }
-        }
-
-        function movePage(step) {
-            const next = state.currentPage + step;
-            if(next >= 0 && next < state.totalPages) {
-                state.currentPage = next;
-                render();
-            }
-        }
-
-        function toggleFullAudio() {
-            const audio = document.getElementById('bg-audio');
-            const btn = document.getElementById('audio-btn-el');
-            if(audio.paused) {
-                audio.play().catch(e => alert("오디오 파일이 없습니다: " + audio.src));
-                btn.innerHTML = "⏸ 듣기 중단";
-                btn.classList.add('playing');
-            } else {
-                audio.pause();
-                btn.innerHTML = "🔊 전체 듣기";
-                btn.classList.remove('playing');
-            }
-        }
-
-        function playWordSound(word) {
-            const cleanWord = word.trim().toLowerCase();
-            new Audio(`audio/${cleanWord}.mp3`).play().catch(e => console.log('단어 없음'));
-        }
-    </script>
+    <script src="story_view.js"></script>
 </body>
 </html>
