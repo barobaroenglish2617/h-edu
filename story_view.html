@@ -8,68 +8,139 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* --- 스타일 설정 --- */
+        /* --- 기본 설정 --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
-        body { background: #f4f6fb; padding: 30px 20px; color: #333; }
+        body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
+        /* --- 뷰어 컨테이너 --- */
         .viewer-container {
-            max-width: 800px; margin: 0 auto; background: white; padding: 50px;
-            border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-            text-align: center; min-height: 80vh; position: relative;
+            width: 100%; max-width: 700px;
+            background: white; border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 30px; text-align: center;
+            position: relative; overflow: hidden;
+            min-height: 650px; display: flex; flex-direction: column;
         }
 
         .close-btn {
-            position: absolute; top: 30px; right: 30px; background: #f1f3f5;
-            border: none; padding: 10px 20px; border-radius: 20px;
-            font-weight: 600; color: #555; cursor: pointer;
+            position: absolute; top: 20px; right: 20px;
+            background: #f1f3f5; border: none; padding: 8px 16px;
+            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 10;
         }
 
-        #story-title { font-size: 32px; font-weight: 800; margin: 20px 0 40px 0; }
-        audio { width: 100%; max-width: 500px; margin-bottom: 40px; height: 40px; }
-
-        /* --- 페이지별 스타일 (그림+글 한 세트) --- */
-        .page-block {
-            margin-bottom: 60px; /* 페이지 사이 간격 */
-            padding-bottom: 40px;
-            border-bottom: 1px dashed #ddd; /* 페이지 구분선 */
+        /* --- 헤더 (제목 + 아이콘) --- */
+        .story-header { 
+            margin-bottom: 20px; margin-top: 10px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .page-block:last-child { border-bottom: none; }
-
-        .story-page-img {
-            width: 100%; height: auto; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            margin-bottom: 30px; /* 그림과 글 사이 간격 */
+        
+        .title-row {
+            display: flex; align-items: center; justify-content: center; gap: 10px; /* 제목과 아이콘 간격 */
+            margin-bottom: 5px;
         }
 
-        .story-text-segment {
-            font-size: 24px; line-height: 1.6; color: #222;
-            text-align: left; background-color: #FFFDE7;
-            padding: 20px; border-radius: 15px;
-            white-space: pre-line;
-            display: inline-block; width: 100%;
+        .story-title { font-size: 1.6rem; font-weight: 800; color: #222; margin: 0; word-break: keep-all; }
+        
+        /* 제목 옆 오디오 버튼 스타일 */
+        .header-audio-btn {
+            background-color: #eee; 
+            border: none; width: 36px; height: 36px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; display: none; /* 기본 숨김 */
+            align-items: center; justify-content: center;
+            transition: all 0.2s; color: #555;
         }
+        .header-audio-btn:hover { background-color: #ddd; transform: scale(1.1); }
+        .header-audio-btn.playing { background-color: #5D5FEF; color: white; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
+        }
+
+        .page-indicator { font-size: 0.9rem; color: #888; font-weight: 600; }
+
+        /* --- 콘텐츠 영역 --- */
+        .content-wrapper {
+            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+
+        .image-area {
+            width: 100%; max-height: 350px;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: #f0f0f0; display: flex; justify-content: center; align-items: center;
+        }
+        .story-img { width: 100%; height: auto; max-height: 350px; object-fit: contain; }
+
+        .text-area {
+            width: 100%; display: flex; justify-content: center; align-items: center; min-height: 150px;
+        }
+
+        /* 문장 & 단어 스타일 */
+        .story-text {
+            font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.5; word-break: keep-all;
+            background-color: #FFFDE7; padding: 20px; border-radius: 15px; width: 100%;
+        }
+        .word-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .word-card {
+            background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
+            padding: 12px 16px; font-size: 1.2rem; font-weight: 700; color: #444;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
+        .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
+
+        /* 네비게이션 */
+        .nav-controls { margin-top: 20px; display: flex; justify-content: space-between; gap: 15px; }
+        .nav-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .nav-btn.prev { background: #f1f3f5; color: #666; }
+        .nav-btn.next { background: #5D5FEF; color: white; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="viewer-container">
         <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
-        <div id="loading" style="margin-top:100px; color:#888;">이야기를 불러오고 있어요...</div>
 
-        <div id="content-area" style="display: none;">
-            <h1 id="story-title">Loading...</h1>
-            <audio id="story-audio" controls></audio>
-            
-            <div id="pages-container"></div>
+        <audio id="bg-audio"></audio>
+
+        <header class="story-header">
+            <div class="title-row">
+                <h1 id="display-title" class="story-title">Loading...</h1>
+                <button id="header-play-btn" class="header-audio-btn" onclick="toggleFullAudio()">🔊</button>
+            </div>
+            <div id="page-indicator" class="page-indicator">- / -</div>
+        </header>
+
+        <div class="content-wrapper">
+            <div class="image-area">
+                <img id="story-img" src="" alt="Story Scene">
+            </div>
+            <div id="text-area" class="text-area"></div>
+        </div>
+
+        <div class="nav-controls">
+            <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
+            <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
         </div>
     </div>
 
     <script>
-        // ★ Supabase 설정 (키는 그대로 두세요!)
+        // Supabase 설정
         const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
-        
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let storyData = {};
+        let currentPage = 0;
+        let totalPages = 0;
+        const bgAudio = document.getElementById('bg-audio');
+        const playBtn = document.getElementById('header-play-btn');
+
+        document.addEventListener('DOMContentLoaded', loadStory);
 
         async function loadStory() {
             const params = new URLSearchParams(window.location.search);
@@ -77,72 +148,110 @@
 
             if (!targetId) { alert("잘못된 접근입니다."); return; }
 
-            const { data, error } = await _supabase
+            const { data, error } = await supabaseClient
                 .from('stories')
                 .select('*')
                 .eq('sort_order', targetId)
                 .single();
 
-            if (error || !data) {
-                document.getElementById('loading').innerText = "내용을 불러올 수 없습니다.";
-                return;
+            if (error || !data) { alert("데이터 로딩 실패"); return; }
+
+            // 데이터 처리
+            const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
+            const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
+            let words = data.words ? (typeof data.words === 'string' ? data.words.split(',') : data.words) : ["kid", "pet", "pig"];
+
+            storyData = {
+                title: data.title,
+                number: data.sort_order,
+                images: images,
+                texts: texts,
+                words: words,
+                audioUrl: data.audio_url 
+            };
+
+            // 오디오 소스 설정
+            if (storyData.audioUrl) {
+                bgAudio.src = storyData.audioUrl;
             }
 
-            // 제목 및 오디오
-            document.getElementById('story-title').innerText = data.title;
-            const audioEl = document.getElementById('story-audio');
-            if (data.audio_url) {
-                audioEl.src = data.audio_url;
-                audioEl.style.display = 'inline-block';
-            } else {
-                audioEl.style.display = 'none';
-            }
-
-            // ★ 핵심: 그림과 글 짝맞추기 로직
-            const pagesContainer = document.getElementById('pages-container');
-            pagesContainer.innerHTML = ''; 
-
-            // 1. 그림 주소 콤마(,)로 자르기
-            let imageUrls = [];
-            if (data.page_images) {
-                imageUrls = data.page_images.split(',').map(u => u.trim()).filter(u => u);
-            } else if (data.thumbnail_url) {
-                imageUrls = [data.thumbnail_url];
-            }
-
-            // 2. 글 내용 ||| 로 자르기 (없으면 빈 배열)
-            let textSegments = [];
-            if (data.content) {
-                textSegments = data.content.split('|||').map(t => t.trim());
-            }
-
-            // 3. 그림 개수만큼 반복하면서 화면에 뿌리기
-            imageUrls.forEach((url, index) => {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'page-block';
-
-                // (1) 그림 넣기
-                const img = document.createElement('img');
-                img.src = url;
-                img.className = 'story-page-img';
-                pageDiv.appendChild(img);
-
-                // (2) 짝에 맞는 글 넣기 (글이 있으면)
-                if (textSegments[index]) {
-                    const textDiv = document.createElement('div');
-                    textDiv.className = 'story-text-segment';
-                    textDiv.innerText = textSegments[index];
-                    pageDiv.appendChild(textDiv);
-                }
-
-                pagesContainer.appendChild(pageDiv);
-            });
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content-area').style.display = 'block';
+            totalPages = 1 + Math.max(images.length, texts.length);
+            renderPage(0);
         }
 
-        loadStory();
+        function renderPage(index) {
+            currentPage = index;
+            
+            // 제목 업데이트
+            document.getElementById('display-title').innerText = `Story ${storyData.number}. ${storyData.title}`;
+            document.getElementById('page-indicator').innerText = `${currentPage + 1} / ${totalPages}`;
+
+            // === 오디오 아이콘 제어 (첫 페이지에서만 보이기) ===
+            if (index === 0 && storyData.audioUrl) {
+                playBtn.style.display = 'flex'; // 첫 페이지고 오디오 있으면 보이기
+            } else {
+                playBtn.style.display = 'none'; // 나머지 페이지는 숨김 (소리는 계속 나옴)
+            }
+
+            const imgEl = document.getElementById('story-img');
+            const textEl = document.getElementById('text-area');
+
+            // [0페이지] 단어장
+            if (index === 0) {
+                imgEl.src = storyData.images[0] || '';
+                
+                let html = '<div class="word-grid">';
+                storyData.words.forEach(word => {
+                    html += `<div class="word-card" onclick="playWordAudio('${word}')">${word}</div>`;
+                });
+                html += '</div>';
+                textEl.innerHTML = html;
+
+            } else {
+                // [1~N페이지] 스토리
+                const arrayIndex = index - 1;
+                if (storyData.images[arrayIndex]) imgEl.src = storyData.images[arrayIndex];
+                
+                const sentence = storyData.texts[arrayIndex] || "...";
+                textEl.innerHTML = `<div class="story-text">${sentence}</div>`;
+            }
+
+            // 버튼 상태
+            document.getElementById('btn-prev').disabled = (index === 0);
+            const nextBtn = document.getElementById('btn-next');
+            if (index === totalPages - 1) {
+                nextBtn.innerText = "Finish";
+                nextBtn.onclick = () => history.back();
+            } else {
+                nextBtn.innerText = "Next";
+                nextBtn.onclick = () => changePage(1);
+            }
+        }
+
+        function changePage(step) {
+            const newPage = currentPage + step;
+            if (newPage >= 0 && newPage < totalPages) renderPage(newPage);
+        }
+
+        // 전체 듣기 토글
+        function toggleFullAudio() {
+            if (bgAudio.paused) {
+                bgAudio.play();
+                playBtn.innerHTML = "⏸"; // 일시정지 아이콘
+                playBtn.classList.add('playing');
+            } else {
+                bgAudio.pause();
+                playBtn.innerHTML = "🔊"; // 스피커 아이콘
+                playBtn.classList.remove('playing');
+            }
+        }
+
+        // 단어 듣기
+        function playWordAudio(word) {
+            const cleanWord = word.trim().toLowerCase(); 
+            const audio = new Audio(`audio/${cleanWord}.mp3`);
+            audio.play();
+        }
     </script>
 </body>
 </html>
