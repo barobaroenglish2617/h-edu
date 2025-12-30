@@ -4,325 +4,305 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story View - Blossom English</title>
+
     <link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/variable/pretendardvariable.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* --- 기본 설정 --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Pretendard Variable", sans-serif; }
-        body { background: #f4f6fb; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-
-        /* --- 뷰어 컨테이너 --- */
-        .viewer-container {
-            width: 100%; max-width: 950px; /* 가로로 더 넓게 시원하게 */
-            background: white; border-radius: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 40px; 
-            position: relative; overflow: hidden;
-            min-height: 600px; display: flex; flex-direction: column;
-        }
-
-        .close-btn {
-            position: absolute; top: 20px; right: 20px;
-            background: #f1f3f5; border: none; padding: 8px 16px;
-            border-radius: 20px; font-weight: 600; color: #666; cursor: pointer; z-index: 20;
-        }
-
-        /* --- ★ 헤더 영역 (완전 수정) --- */
-        .story-header { 
-            margin-bottom: 30px; margin-top: 10px; 
-            display: flex; 
-            flex-direction: row; 
-            align-items: flex-end; /* 제목과 버튼의 아래 라인을 맞춤 */
-            justify-content: space-between; /* 양쪽 끝으로 벌리기 */
-            width: 100%;
-            padding-right: 60px; /* 닫기 버튼 자리 확보 */
-            border-bottom: 2px solid #f4f6fb; /* 헤더 구분선 살짝 추가 */
-            padding-bottom: 15px;
-        }
-        
-        /* 왼쪽: 제목 그룹 */
-        .header-left {
-            display: flex; flex-direction: column; align-items: flex-start; text-align: left;
-        }
-
-        .story-title { 
-            font-size: 2rem; font-weight: 800; color: #222; margin: 0; 
-            line-height: 1.1; word-break: keep-all; letter-spacing: -0.5px;
-        }
-        
-        .page-indicator { 
-            font-size: 1rem; color: #888; font-weight: 600; margin-top: 8px; 
-        }
-
-        /* 오른쪽: 전체 듣기 버튼 */
-        .play-all-btn {
-            background-color: #eee; color: #555;
-            border: none; padding: 10px 24px; border-radius: 50px;
-            font-size: 1rem; font-weight: 700; cursor: pointer; 
-            display: flex; align-items: center; gap: 8px;
-            transition: all 0.2s; white-space: nowrap;
-            margin-bottom: 5px; /* 시각적 정렬 보정 */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .play-all-btn:hover { background-color: #e0e0e0; transform: scale(1.05); }
-        .play-all-btn.playing { 
-            background-color: #5D5FEF; color: white; 
-            box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(93, 95, 239, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(93, 95, 239, 0); }
-        }
-
-        /* --- 콘텐츠 영역 (가로 배치) --- */
-        .content-wrapper {
-            flex: 1; 
-            display: flex; 
-            flex-direction: row; 
-            align-items: flex-start;
+        body {
+            background: #f4f6fb;
+            padding: 20px;
+            display: flex;
             justify-content: center;
-            gap: 40px; 
-            margin-bottom: 20px;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        /* 왼쪽: 그림 영역 */
-        .image-area {
-            flex: 1; width: 100%; 
-            border-radius: 20px; overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            background: #fff; display: flex; justify-content: center; align-items: center;
-        }
-        .story-img { width: 100%; height: auto; display: block; }
-
-        /* 오른쪽: 텍스트 영역 */
-        .text-area {
-            flex: 1; width: 100%; 
-            display: flex; justify-content: center; align-items: center;
+        .viewer-container {
+            width: 100%;
+            max-width: 950px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 40px;
+            display: flex;
             flex-direction: column;
+            position: relative;
+            min-height: 600px;
         }
 
-        /* 문장 스타일 */
+        /* ===== 상단 버튼 ===== */
+        .top-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .top-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            background: #f1f3f5;
+            color: #555;
+        }
+
+        .top-btn.home { background: #dbeafe; color: #1d4ed8; }
+        .top-btn.retry { background: #ede9fe; color: #5b21b6; }
+        .top-btn.back { background: #fee2e2; color: #991b1b; }
+
+        /* ===== 헤더 ===== */
+        .story-header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f4f6fb;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-left { display: flex; flex-direction: column; }
+
+        .story-title {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-indicator {
+            margin-top: 6px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .play-all-btn {
+            background: #eee;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .play-all-btn.playing {
+            background: #5D5FEF;
+            color: white;
+        }
+
+        /* ===== 콘텐츠 ===== */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 40px;
+        }
+
+        .image-area {
+            flex: 1;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .story-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .image-placeholder {
+            color: #aaa;
+            font-size: 1.2rem;
+        }
+
+        .text-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .story-text {
-            font-size: 1.8rem; font-weight: 600; color: #333; line-height: 1.6; word-break: keep-all;
-            background-color: #FFFDE7; padding: 30px; border-radius: 20px; width: 100%;
-            text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            background: #FFFDE7;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            line-height: 1.6;
+            width: 100%;
         }
 
-        /* 단어 카드 그리드 (2열) */
-        .word-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; 
-            padding: 5px; 
+        .word-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
         }
+
         .word-card {
-            background: #fff; border: 2px solid #f0f0f0; border-radius: 12px;
-            padding: 12px 16px; font-size: 1.1rem; font-weight: 700; color: #444;
-            display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid #eee;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
         }
-        .word-card:hover { border-color: #5D5FEF; color: #5D5FEF; background-color: #F8F8FF; transform: translateY(-2px); }
-        .word-card::after { content: '🔊'; font-size: 0.9rem; opacity: 0.3; }
 
-        /* 네비게이션 버튼 */
-        .nav-controls { margin-top: auto; display: flex; justify-content: center; gap: 20px; width: 100%; }
-        .nav-btn { 
-            padding: 15px 40px; border: none; border-radius: 12px; 
-            font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.2s; min-width: 120px;
+        .word-card:hover {
+            border-color: #5D5FEF;
+            color: #5D5FEF;
         }
-        .nav-btn.prev { background: #f1f3f5; color: #666; }
-        .nav-btn.prev:hover { background: #e9ecef; }
+
+        .nav-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            padding: 15px 40px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .nav-btn.prev { background: #f1f3f5; }
         .nav-btn.next { background: #5D5FEF; color: white; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .nav-btn.next:hover:not(:disabled) { background: #4A4CD0; transform: scale(1.05); }
-
-        /* 모바일 반응형 */
-        @media (max-width: 768px) {
-            .viewer-container { padding: 20px; max-width: 100%; border-radius: 0; min-height: 100vh; }
-            .content-wrapper { flex-direction: column; gap: 20px; }
-            /* 모바일에선 헤더 다시 세로로 (공간 부족) */
-            .story-header { flex-direction: column; align-items: flex-start; gap: 15px; padding-right: 0; }
-            .play-all-btn { width: 100%; justify-content: center; } 
-            .nav-controls { gap: 10px; }
-            .nav-btn { flex: 1; padding: 15px; }
-        }
     </style>
 </head>
+
 <body>
+<div class="viewer-container">
 
-    <div class="viewer-container">
-        <button class="close-btn" onclick="history.back()">목록으로 ✕</button>
-        <audio id="bg-audio"></audio>
-
-        <header class="story-header">
-            <div class="header-left">
-                <h1 id="display-title" class="story-title">Loading...</h1>
-                <div id="page-indicator" class="page-indicator">- / -</div>
-            </div>
-
-            <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">
-                <span>🔊 Story Full Audio</span>
-            </button>
-        </header>
-
-        <div class="content-wrapper">
-            <div class="image-area">
-                <img id="story-img" src="" alt="Story Scene" class="story-img">
-            </div>
-            
-            <div id="text-area" class="text-area"></div>
-        </div>
-
-        <div class="nav-controls">
-            <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
-            <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
-        </div>
+    <!-- 상단 버튼 -->
+    <div class="top-buttons">
+        <button class="top-btn home" onclick="goHome()">Home</button>
+        <button class="top-btn retry" onclick="restartStory()">다시풀기</button>
+        <button class="top-btn back" onclick="history.back()">돌아가기</button>
     </div>
 
-    <script>
-        // Supabase 설정
-        const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <audio id="bg-audio"></audio>
 
-        let storyData = {};
-        let currentPage = 0;
-        let totalPages = 0;
-        const bgAudio = document.getElementById('bg-audio');
-        const playBtn = document.getElementById('header-play-btn');
+    <header class="story-header">
+        <div class="header-left">
+            <h1 id="display-title" class="story-title">Loading...</h1>
+            <div id="page-indicator" class="page-indicator"></div>
+        </div>
+        <button id="header-play-btn" class="play-all-btn" onclick="toggleFullAudio()">🔊 Story Full Audio</button>
+    </header>
 
-        document.addEventListener('DOMContentLoaded', loadStory);
+    <div class="content-wrapper">
+        <div class="image-area" id="image-area">
+            <img id="story-img" class="story-img" />
+            <div id="image-placeholder" class="image-placeholder" style="display:none;">
+                이미지 준비중
+            </div>
+        </div>
 
-        async function loadStory() {
-            const params = new URLSearchParams(window.location.search);
-            const targetId = params.get('id');
+        <div id="text-area" class="text-area"></div>
+    </div>
 
-            if (!targetId) { alert("잘못된 접근입니다."); return; }
+    <div class="nav-controls">
+        <button id="btn-prev" class="nav-btn prev" onclick="changePage(-1)">Previous</button>
+        <button id="btn-next" class="nav-btn next" onclick="changePage(1)">Next</button>
+    </div>
+</div>
 
-            const { data, error } = await supabaseClient
-                .from('stories')
-                .select('*')
-                .eq('sort_order', targetId)
-                .single();
+<script>
+const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
+const SUPABASE_KEY = 'YOUR_KEY';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            if (error || !data) { alert("데이터 로딩 실패"); return; }
+let storyData = {};
+let currentPage = 0;
+let totalPages = 0;
 
-            const images = data.page_images ? data.page_images.split(',').map(s=>s.trim()) : [data.thumbnail_url];
-            const texts = data.content ? data.content.split('|||').map(s=>s.trim()) : [];
-            
-            // 단어 데이터 (없을 경우 요청하신 단어 목록 사용)
-            let words = [];
-            if (data.words && typeof data.words === 'string') {
-                words = data.words.split(',').map(w => w.trim());
-            } else if (data.words && Array.isArray(data.words)) {
-                words = data.words;
-            } else {
-                words = ["ant", "apple", "egg", "elf", "owl", "ox", "up", "upset", "it", "bed", "bell"];
-            }
+const bgAudio = document.getElementById('bg-audio');
+const playBtn = document.getElementById('header-play-btn');
 
-            storyData = {
-                title: data.title,
-                number: data.sort_order,
-                images: images,
-                texts: texts,
-                words: words,
-                audioUrl: data.audio_url 
-            };
+document.addEventListener('DOMContentLoaded', loadStory);
 
-            if (storyData.audioUrl) {
-                bgAudio.src = storyData.audioUrl;
-            }
+async function loadStory() {
+    const id = new URLSearchParams(location.search).get('id');
+    const { data } = await supabaseClient.from('stories').select('*').eq('sort_order', id).single();
 
-            totalPages = 1 + Math.max(images.length, texts.length);
-            renderPage(0);
-        }
+    storyData = {
+        title: data.title,
+        number: data.sort_order,
+        images: data.page_images.split(',').map(v => v.trim()),
+        texts: data.content.split('|||').map(v => v.trim()),
+        words: data.words?.split(',') || [],
+        audioUrl: data.audio_url
+    };
 
-        function renderPage(index) {
-            currentPage = index;
-            
-            // ★ [제목 중복 제거 로직]
-            // DB 제목이 이미 "Story N"으로 시작하는지 확인
-            let fullTitle = storyData.title;
-            const prefix = `Story ${storyData.number}`;
-            
-            // 제목에 "Story 번호"가 없으면 붙여주고, 이미 있으면 그대로 사용
-            if (!fullTitle.toLowerCase().includes(prefix.toLowerCase())) {
-                fullTitle = `${prefix}. ${fullTitle}`;
-            }
-            
-            document.getElementById('display-title').innerText = fullTitle;
-            document.getElementById('page-indicator').innerText = `Page ${currentPage + 1} / ${totalPages}`;
+    if (storyData.audioUrl) bgAudio.src = storyData.audioUrl;
+    totalPages = 1 + storyData.texts.length;
+    renderPage(0);
+}
 
-            // 오디오 버튼 제어 (첫 페이지 + 오디오URL 있을 때만 보임)
-            // ★ 중요: 이전 코드에서 display:none 처리가 잘못되어 안 보였을 수 있음.
-            // 이번에는 확실하게 처리.
-            if (index === 0 && storyData.audioUrl) {
-                playBtn.style.visibility = 'visible';
-                playBtn.style.opacity = '1';
-                playBtn.style.display = 'flex'; // Flex로 강제
-            } else {
-                playBtn.style.display = 'none'; // 사라지게
-            }
+function renderPage(index) {
+    currentPage = index;
+    document.getElementById('display-title').innerText =
+        `Story ${storyData.number}. ${storyData.title}`;
+    document.getElementById('page-indicator').innerText =
+        `Page ${index + 1} / ${totalPages}`;
 
-            const imgEl = document.getElementById('story-img');
-            const textEl = document.getElementById('text-area');
+    const img = document.getElementById('story-img');
+    const placeholder = document.getElementById('image-placeholder');
+    const text = document.getElementById('text-area');
 
-            // [Page 0] 단어장
-            if (index === 0) {
-                imgEl.src = storyData.images[0] || '';
-                
-                let html = '<div class="word-grid">';
-                storyData.words.forEach(word => {
-                    html += `<div class="word-card" onclick="playWordAudio('${word}')">${word}</div>`;
-                });
-                html += '</div>';
-                textEl.innerHTML = html;
+    if (storyData.images[index]) {
+        img.src = storyData.images[index];
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'block';
+    }
 
-            } else {
-                // [Page 1~N] 스토리
-                const arrayIndex = index - 1;
-                if (storyData.images[arrayIndex]) imgEl.src = storyData.images[arrayIndex];
-                
-                const sentence = storyData.texts[arrayIndex] || "...";
-                textEl.innerHTML = `<div class="story-text">${sentence}</div>`;
-            }
+    if (index === 0) {
+        text.innerHTML = `<div class="word-grid">
+            ${storyData.words.map(w => `<div class="word-card">${w}</div>`).join('')}
+        </div>`;
+    } else {
+        text.innerHTML = `<div class="story-text">${storyData.texts[index - 1]}</div>`;
+    }
 
-            document.getElementById('btn-prev').disabled = (index === 0);
-            const nextBtn = document.getElementById('btn-next');
-            if (index === totalPages - 1) {
-                nextBtn.innerText = "Finish";
-                nextBtn.onclick = () => history.back();
-            } else {
-                nextBtn.innerText = "Next";
-                nextBtn.onclick = () => changePage(1);
-            }
-        }
+    document.getElementById('btn-prev').disabled = index === 0;
+}
 
-        function changePage(step) {
-            const newPage = currentPage + step;
-            if (newPage >= 0 && newPage < totalPages) renderPage(newPage);
-        }
+function changePage(step) {
+    const next = currentPage + step;
+    if (next >= 0 && next < totalPages) renderPage(next);
+}
 
-        function toggleFullAudio() {
-            if (bgAudio.paused) {
-                bgAudio.play();
-                playBtn.innerHTML = "⏸ Pause Audio";
-                playBtn.classList.add('playing');
-            } else {
-                bgAudio.pause();
-                playBtn.innerHTML = "🔊 Story Full Audio";
-                playBtn.classList.remove('playing');
-            }
-        }
+function toggleFullAudio() {
+    if (bgAudio.paused) {
+        bgAudio.play();
+        playBtn.classList.add('playing');
+        playBtn.innerText = '⏸ Pause';
+    } else {
+        bgAudio.pause();
+        playBtn.classList.remove('playing');
+        playBtn.innerText = '🔊 Story Full Audio';
+    }
+}
 
-        function playWordAudio(word) {
-            const cleanWord = word.trim().toLowerCase(); 
-            const audio = new Audio(`audio/${cleanWord}.mp3`);
-            audio.play();
-        }
-    </script>
+function restartStory() {
+    renderPage(0);
+}
+
+function goHome() {
+    location.href = 'story_list.html';
+}
+</script>
 </body>
 </html>
