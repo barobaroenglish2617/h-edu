@@ -1,205 +1,575 @@
-// story_view.js (하이브리드 전자책)
-// - 제목/단어/문장: JS storiesData
-// - 이미지/음원: Supabase Storage (public)
+// story_view.js
+// - 텍스트(제목/단어/문장페이지 구성): JS에 고정
+// - 이미지/오디오: Supabase Storage에서 public URL로 불러옴
 
 const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ✅ 너 Storage 버킷명
+// ✅ Storage 버킷명
 const IMAGE_BUCKET = 'image';
-const AUDIO_BUCKET = 'audio'; // ✅ 음원 올릴 버킷(예정). 버킷명이 다르면 여기만 수정
+const AUDIO_BUCKET = 'audio'; // 스토리 전체 음원: story1.mp3 형태로 업로드 예정
 
-/**
- * ==========================================
- * 1) 텍스트 데이터는 JS에 (필수)
- *    + imageCount: 스토리 이미지 장수
- * ==========================================
- */
-const storiesData = [
-  {
-    id: 1,
-    title: "The sun is up",
-    imageCount: 5, // ✅ Storage에 1-1.png ~ 1-5.png
-    words: ["ant","apple","album","elf","egg","exit","it","ink","igloo","ox","owl","olive","up","upset","bus","bed","bell"],
-    sentences: ["An ant sits on the egg.","An elf sits on the apple.","An owl sits on the bus.","An ox sits on the bus.","The sun is up.","The ant is in bed.","Bell! It is fun!","The ant is upset."]
-  },
-  {
-    id: 2,
-    title: "Dad's Hat",
-    imageCount: 5, // ✅ 2-1.png ~ 2-5.png (없으면 장수 맞게 수정)
-    words: ["can","cap","cat","dad","duck","desk","fat","fan","fun","get","gum","god","hat","ham","hand","jam","job","jump"],
-    sentences: ["Dad has a hat.","A cat sits on the hat.","A duck sits on the cat.","Jump! The duck can jump.","Jump! The cat can jump.","The hat is on the bed.","Dad says. \"My hat!\"","The fat cat sits on Dad.","It is fun!"]
-  },
-  // ... 나머지 3~14도 동일하게 유지
-];
-
-/**
- * ==========================================
- * 2) 상태
- * ==========================================
- */
-let state = {
-  story: null,
-  currentPage: 0,
-  totalPages: 0
+/* =========================================================
+   1) 스토리 제목/단어 리스트 (JS에 고정)
+   ========================================================= */
+const TITLE_BY_STORY = {
+  1: "The sun is up",
+  2: "Dad's Hat",
+  3: "The Quick Pet",
+  4: "The Red Fox",
+  5: "The Magic Fish",
+  6: "The Pink Ring",
+  7: "Cook the soup",
+  8: "The cow and the boy",
+  9: "The Blue Suit",
+  10: "The Flying Hamburger",
+  11: "The Flying Frog",
+  12: "The Prince and Princess",
+  13: "Snake and Snowman",
+  14: "The Magic Drum"
 };
 
-const bgAudio = document.getElementById('bg-audio');
-const playBtn = document.getElementById('header-play-btn');
+const WORDS_BY_STORY = {
+  1: ["ant","apple","album","elf","egg","exit","it","ink","igloo","ox","owl","olive","up","upset","bus","bed","bell"],
+  2: ["can","cap","cat","dad","duck","desk","fat","fan","fun","get","gum","god","hat","ham","hand","jam","job","jump"],
+  3: ["kid","king","kiwi","leg","lip","lamp","mom","map","man","nut","net","not","pen","pet","pig","quiz","quick","queen"],
+  4: ["red","run","rain","sad","sit","sun","ten","tent","taxi","van","vet","very","win","wind","wow","six","fox","box"],
+  5: ["yes","yell","yummy","zero","zoo","zebra","visit","busy","easy","city","dance","voice","gym","magic","gel","bench","lunch","rich","shop","dish","fish"],
+  6: ["thick","thank","math","this","that","they","sick","pick","neck","sell","tell","help","sing","ring","painting","sink","pink","bank"],
+  7: ["see","meet","beef","eat","sea","read","book","good","cook","cool","room","moon","nose","close","home","coat","soup","road"],
+  8: ["snow","window","rainbow","cow","how","now","oil","join","coin","boy","toy","joy","cake","late","name","mail","tail","brain","say","okay","day"],
+  9: ["nice","like","mine","die","pie","lie","fruit","suit","juice","blue","true","glue","use","cute","tube","new","news","newspaper"],
+  10: ["by","fry","sky","candy","happy","puppy","teacher","paper","weather","girl","bird","third","nurse","hamburger","Thursday"],
+  11: ["black","block","blow","bring","brown","brush","clock","club","cloud","cry","cross","cream","fly","flag","flower","frog","from","front"],
+  12: ["glad","glass","glasses","grass","green","grape","plan","plant","plane","prince","princess","prize","slow","slide","sleep","smell","small","smile"],
+  13: ["snowman","snack","snake","ski","skirt","skate","spoon","speed","spell","story","street","study","squid","square","squeeze","swim","swing","sweet"],
+  14: ["drum","drink","dream","tree","train","trash","pho","phone","photo","laugh","cough","enough","why","when","white"]
+};
 
-document.addEventListener('DOMContentLoaded', init);
+/* =========================================================
+   2) 페이지 설계도 (너가 준 포맷 그대로)
+   - "스토리-그림번호" 다음 줄에
+     - "단어"면 단어장 페이지
+     - 그 외는 문장(여러 줄)
+   ========================================================= */
+const PAGE_PLAN_TEXT = `
+1-1
+단어
 
-function init() {
-  const params = new URLSearchParams(window.location.search);
-  const id = Number(params.get('id'));
+1-2 
+An ant sits on the egg.
+An elf sits on the apple.
 
-  if (!id) {
-    alert("잘못된 접근입니다. (URL id 없음)");
-    return;
-  }
+1-3
+An owl sits on the bus.
+An ox sits on the bus.
 
-  const story = storiesData.find(s => s.id === id);
-  if (!story) {
-    alert(`${id}번 이야기를 찾을 수 없습니다.`);
-    return;
-  }
+1-4
+The sun is up.
+The ant is in bed.
 
-  state.story = story;
+1-5
+Bell! It is fun!
+The ant is upset.
 
-  // ✅ 페이지 구조:
-  // 0페이지 = 단어장(커버 이미지)
-  // 1~N = 문장 페이지(각 문장에 해당 이미지)
-  state.totalPages = 1 + story.sentences.length;
 
-  renderPage(0);
+
+2-1
+단어
+
+2-2
+Dad has a hat.
+A cat sits on the hat.
+A duck sits on the cat.
+
+2-3
+Jump! The duck can jump.
+Jump! The cat can jump
+
+2-4
+The hat is on the bed.
+Dad says. "My hat!"
+
+2-5
+The fat cat sits on Dad.
+It is fun!
+
+
+3-1
+단어
+
+3-2
+A kid has a pet pig.
+The pig is quick!
+
+3-3
+The pig sits on the map.
+"Not on my map!" says mom.
+
+3-4
+The pig runs. Quick!
+The pig jumps on the lamp.
+The lamp is on the bed.
+
+3-5
+The kid gets a nut.
+The pig eats the nut.
+
+
+4-1
+단어
+
+4-2
+A red fox sits in a box.
+Rain falls.
+The fox is sad.
+
+4-3
+A vet sits in the tent.
+The vet has six cats.
+"Wow!" says the fox.
+
+4-4
+The cats run.
+The fox runs, too.
+The fox wins!
+
+4-5
+The cats sit in the box now.
+The fox is not sad!
+
+
+5-1
+단어
+
+5-2
+A zebra visits the zoo.
+The zebra sees a magic fish.
+The fish sits on a bench.
+
+5-3
+The zebra sits on the bench, too.
+"Yummy lunch!" says the zebra.
+
+5-4
+The magic fish can dance!
+"Wow!" says the zebra.
+
+5-5
+"It is easy. You can dance, too!" says the magic fish.
+
+
+6-1
+단어
+
+6-2
+A man sells rings.
+"That is thin." "This is thick!" say Tom and Sally.
+
+6-3
+They pick a pink ring.
+"Thank you!" says Mom.
+
+6-4
+Mom puts the ring on the sink.
+"My neck!" says Mom. She is sick!
+
+6-5
+The pink ring falls.
+They run and help!
+
+
+7-1
+단어
+
+7-2
+It is cool.
+"My coat!"
+
+
+7-3
+The queen meets a cook.
+She gives beef to him.
+
+
+7-4
+The cook sees a fish at the sea.
+He goes home.
+
+
+7-5
+He reads a book.
+He cooks soup.
+
+7-6
+The moon is up.
+"Let's eat!" says the queen.
+
+
+8-1
+단어
+
+8-2
+A boy looks out the window.
+It is snowing.
+
+
+8-3
+A cow has a coin on its tail.
+The boy runs to the cow.
+
+
+8-4
+"Hi, I am Cow wow! Join me!" it says.
+"Okay." The boy says.
+
+
+8-5
+The cow makes a cake.
+
+8-6
+They eat cake.
+"Yummy!", they yell.
+
+
+
+9-1
+단어
+
+9-2
+A cute boy needs a new suit.
+He has newspaper.
+
+
+9-3
+He cuts the blue suit.
+"I will use glue and make my suit," he says.
+"This is nice. I like it."
+
+9-4
+He gets fruit juice and pie.
+"This is mine.“
+"Yummy!"
+
+
+9-5
+"Oh no! My pie!" he yells.
+
+
+10-1
+단어
+
+10-2
+A girl sits by a teacher.
+The teacher has paper and candy.
+
+
+10-3
+"Look at the sky. The weather is nice," says the teacher.
+A hamburger is in the sky!
+
+
+10-4
+A happy puppy runs to it.
+The hamburger falls.
+
+
+10-5
+The puppy eats the hamburger.
+A nurse runs to the puppy.
+
+
+
+11-1
+단어
+
+11-2
+A frog sits by the flower.
+The frog is brown.
+It has a brush.
+
+
+
+11-3
+It crosses the blocks.
+A black cloud comes. The wind blows.
+
+11-4
+The frog sits by the clock.
+"I can fly!"
+The frog is happy
+
+
+11-5
+A girl is crying.
+"Don't cry! Ice cream for you!" says the frog.
+
+11-6
+She eats ice cream. 
+The girl is happy now
+
+
+12-1
+단어
+
+12-2
+A small prince is sleeping.
+The sun is up.
+
+12-3
+The prince slides down. 
+He smiles.
+
+12-4
+A princess comes!
+"Glad to meet you!" says the princess.
+
+12-5
+They make a plane on the green grass.
+
+12-6
+The princess gives magic glasses to the prince.
+The prince smiles.
+
+
+13-1
+단어
+
+13-2
+A snake meets a snowman on the street.
+"Hi!" says the snowman.
+
+13-3
+"I have a fun story!"
+"Thank you!" says the snake.
+
+13-4
+"I have a snack."
+The snake gives a square lunch box and a spoon.
+
+13-5
+They ski and skate.
+"This is fun!" says the snake.
+
+13-6
+They swim and swing.
+"Yes!" says the snowman.
+
+
+14-1
+단어
+
+14-2
+A boy has a white drum.
+It is a magic drum.
+
+14-3
+He hits the drum. Bang!
+"Juice!" 
+He smiles and drinks it.
+
+14-4
+"Train!"
+"Wow!" he laughs.
+
+14-5
+He hits the drum. Bang!
+"Phone!"
+
+14-6
+He hits the drum. Bang!
+"Tree!"
+
+14-7
+"Stop! That is enough!" says Mom.
+`.trim();
+
+/* =========================================================
+   상태
+   ========================================================= */
+let bgAudio = null;
+let playBtn = null;
+
+let storyId = 0;
+let pages = []; // [{storyId, imgNo, type:'words'|'text', lines:[...]}]
+let currentPage = 0;
+let storyAudioUrl = '';
+
+document.addEventListener('DOMContentLoaded', () => {
+  bgAudio = document.getElementById('bg-audio');
+  playBtn = document.getElementById('header-play-btn');
+  init().catch(err => {
+    console.error(err);
+    alert('오류가 발생했습니다. 콘솔을 확인하세요.');
+  });
+});
+
+/* =========================================================
+   유틸
+   ========================================================= */
+function norm(s) {
+  return String(s ?? '').replace(/\r/g, '').trim();
 }
 
-/**
- * ==========================================
- * 3) Supabase Storage public URL 생성
- * ==========================================
- */
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function getPublicUrl(bucket, path) {
   const { data } = supabaseClient.storage.from(bucket).getPublicUrl(path);
   return data?.publicUrl || '';
 }
 
-// ✅ 이미지 파일명 규칙: `${id}-${page}.png`
-// page는 1부터 시작 (1-1.png, 1-2.png ...)
-function getImagePath(storyId, pageNumber) {
-  return `${storyId}-${pageNumber}.png`;
+function getImageUrl(storyIdNum, imgNo) {
+  return getPublicUrl(IMAGE_BUCKET, `${storyIdNum}-${imgNo}.png`);
 }
 
-// ✅ 스토리 전체 음원 규칙: `story{id}.mp3`
-function getStoryAudioPath(storyId) {
-  return `story${storyId}.mp3`;
+function getStoryAudioUrl(storyIdNum) {
+  return getPublicUrl(AUDIO_BUCKET, `story${storyIdNum}.mp3`);
 }
 
-// ✅ 단어 음원 규칙: `{word}.mp3` (전부 소문자 추천)
-function getWordAudioPath(word) {
-  return `${String(word).trim().toLowerCase()}.mp3`;
+function parsePagePlan(text) {
+  const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const out = [];
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => norm(l)).filter(Boolean);
+    if (!lines.length) continue;
+
+    const head = lines[0]; // "1-2"
+    const m = head.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (!m) continue;
+
+    const sid = Number(m[1]);
+    const imgNo = Number(m[2]);
+    const body = lines.slice(1);
+
+    if (body.length && body[0] === '단어') {
+      out.push({ storyId: sid, imgNo, type: 'words', lines: [] });
+    } else {
+      out.push({ storyId: sid, imgNo, type: 'text', lines: body });
+    }
+  }
+  return out;
 }
 
-/**
- * ==========================================
- * 4) 렌더링
- * ==========================================
- */
-function renderPage(pageIndex) {
-  const story = state.story;
-  state.currentPage = pageIndex;
+/* =========================================================
+   init
+   ========================================================= */
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  storyId = Number(params.get('id'));
 
-  // 제목/페이지 표시
-  document.getElementById('display-title').innerText = `Story ${story.id}. ${story.title}`;
-  document.getElementById('page-indicator').innerText = `Page ${pageIndex + 1} / ${state.totalPages}`;
-
-  // 오디오 버튼: 0페이지에서만 보이게(원하면 항상 보이게도 가능)
-  if (pageIndex === 0) {
-    playBtn.style.display = 'flex';
-    // ✅ 스토리 전체 음원: Supabase에서 public url
-    const storyAudioUrl = getPublicUrl(AUDIO_BUCKET, getStoryAudioPath(story.id));
-    bgAudio.src = storyAudioUrl; // 없으면 재생 시 에러(괜찮)
-  } else {
-    playBtn.style.display = 'none';
-    bgAudio.pause();
-    playBtn.classList.remove('playing');
-    playBtn.innerHTML = `<span>🔊 Story Full Audio</span>`;
+  if (!storyId) {
+    alert('잘못된 접근입니다. (URL에 id가 없음)');
+    return;
   }
 
-  // 이미지: 기본은 pageIndex에 맞춰서 선택
-  // - 0페이지(단어장): 1-1.png (커버)
-  // - 1페이지(첫 문장): 1-1.png 또는 1-2.png 중 택1
-  //   👉 전자책 느낌이면 보통 "문장1 = 이미지1"이 편함
-  //   그래서: 문장 페이지도 같은 번호로 매칭(문장1 -> 1-1.png)
+  // 1) 페이지 설계도에서 해당 스토리 페이지만 추출
+  const allPages = parsePagePlan(PAGE_PLAN_TEXT);
+  pages = allPages.filter(p => p.storyId === storyId);
+
+  if (!pages.length) {
+    alert(`PAGE_PLAN_TEXT에서 ${storyId}번 스토리 페이지를 찾지 못했습니다.`);
+    return;
+  }
+
+  // 2) 스토리 전체 오디오(있으면 연결)
+  storyAudioUrl = getStoryAudioUrl(storyId);
+  if (storyAudioUrl) bgAudio.src = storyAudioUrl;
+
+  renderPage(0);
+}
+
+/* =========================================================
+   렌더링
+   ========================================================= */
+function renderPage(index) {
+  currentPage = index;
+
+  const title = TITLE_BY_STORY[storyId] || '';
+  const fullTitle = title ? `Story ${storyId}. ${title}` : `Story ${storyId}`;
+
+  document.getElementById('display-title').innerText = fullTitle;
+  document.getElementById('page-indicator').innerText = `Page ${currentPage + 1} / ${pages.length}`;
+
+  const page = pages[currentPage];
+
+  // 이미지
   const imgEl = document.getElementById('story-img');
+  const imgUrl = getImageUrl(page.storyId, page.imgNo);
 
-  let imageNumber;
-  if (pageIndex === 0) {
-    imageNumber = 1; // 커버 = 1-1.png
-  } else {
-    // 문장1 -> 이미지1, 문장2 -> 이미지2 ...
-    // 근데 이미지 장수가 문장보다 적을 수도 있으니 clamp
-    imageNumber = Math.min(pageIndex, story.imageCount || pageIndex);
-    if (imageNumber < 1) imageNumber = 1;
-  }
-
-  const imgUrl = getPublicUrl(IMAGE_BUCKET, getImagePath(story.id, imageNumber));
   imgEl.onerror = function () {
     this.onerror = null;
     this.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found';
   };
   imgEl.src = imgUrl;
 
-  // 오른쪽 내용(단어장/문장)
-  const textEl = document.getElementById('text-area');
-
-  if (pageIndex === 0) {
-    // 단어장
-    let html = '<div class="word-grid">';
-    story.words.forEach(word => {
-      const safe = String(word).replace(/'/g, "\\'");
-      html += `<div class="word-card" onclick="playWordAudio('${safe}')">${word}</div>`;
-    });
-    html += '</div>';
-    textEl.innerHTML = html;
+  // 오디오 버튼: 단어 페이지 + 오디오 있을 때만 표시
+  if (page.type === 'words' && storyAudioUrl) {
+    playBtn.style.display = 'flex';
   } else {
-    const sentence = story.sentences[pageIndex - 1] || '...';
-    textEl.innerHTML = `<div class="story-text">${sentence}</div>`;
+    playBtn.style.display = 'none';
+    bgAudio.pause();
+    playBtn.innerHTML = `<span>🔊 Story Full Audio</span>`;
+    playBtn.classList.remove('playing');
   }
 
-  // 네비 버튼
-  document.getElementById('btn-prev').disabled = (pageIndex === 0);
+  // 내용
+  const textEl = document.getElementById('text-area');
+
+  if (page.type === 'words') {
+    const words = WORDS_BY_STORY[storyId] || [];
+    if (!words.length) {
+      textEl.innerHTML = `<div class="story-text">단어 목록이 없습니다.</div>`;
+    } else {
+      let html = '<div class="word-grid">';
+      for (const w of words) {
+        const safe = String(w).replace(/'/g, "\\'");
+        html += `<div class="word-card" onclick="playWordAudio('${safe}')">${escapeHtml(w)}</div>`;
+      }
+      html += '</div>';
+      textEl.innerHTML = html;
+    }
+  } else {
+    const lines = page.lines || [];
+    const safeHtml = lines.map(line => escapeHtml(line)).join('<br>');
+    textEl.innerHTML = `<div class="story-text">${safeHtml}</div>`;
+  }
+
+  // 네비
+  document.getElementById('btn-prev').disabled = (currentPage === 0);
 
   const nextBtn = document.getElementById('btn-next');
-  if (pageIndex === state.totalPages - 1) {
-    nextBtn.innerText = "Finish";
+  if (currentPage === pages.length - 1) {
+    nextBtn.innerText = 'Finish';
     nextBtn.onclick = () => goBack();
   } else {
-    nextBtn.innerText = "Next";
+    nextBtn.innerText = 'Next';
     nextBtn.onclick = () => changePage(1);
   }
 }
 
+/* =========================================================
+   컨트롤
+   ========================================================= */
 function changePage(step) {
-  const next = state.currentPage + step;
-  if (next >= 0 && next < state.totalPages) renderPage(next);
+  const next = currentPage + step;
+  if (next >= 0 && next < pages.length) renderPage(next);
 }
 
-/**
- * ==========================================
- * 5) 버튼 동작
- * ==========================================
- */
 function toggleFullAudio() {
-  if (!bgAudio.src) {
-    alert("스토리 음원이 아직 없습니다.");
-    return;
-  }
+  if (!storyAudioUrl) return;
 
   if (bgAudio.paused) {
-    bgAudio.play().catch(() => alert("오디오 재생 실패(파일/권한 확인)"));
+    bgAudio.play();
     playBtn.innerHTML = "<span>⏸ Pause Audio</span>";
     playBtn.classList.add('playing');
   } else {
@@ -209,28 +579,18 @@ function toggleFullAudio() {
   }
 }
 
+// 단어 음원: 일단 로컬 audio 폴더 유지(원하면 Supabase audio로 바꿔줄게)
 function playWordAudio(word) {
-  // ✅ 단어 음원도 Supabase에서 public url로 재생
-  const url = getPublicUrl(AUDIO_BUCKET, getWordAudioPath(word));
-  if (!url) return;
-
-  const audio = new Audio(url);
-  audio.play().catch(() => console.log('단어 음원 재생 실패:', word));
+  const cleanWord = String(word).trim().toLowerCase();
+  const audio = new Audio(`audio/${cleanWord}.mp3`);
+  audio.play();
 }
 
-function restartStory() {
-  renderPage(0);
-}
+function restartStory() { renderPage(0); }
+function goBack() { history.back(); }
+function goHome() { window.location.href = 'index.html'; }
 
-function goBack() {
-  history.back();
-}
-
-function goHome() {
-  window.location.href = 'index.html';
-}
-
-// HTML onclick에서 호출되도록 전역 등록
+// onclick 전역 등록
 window.toggleFullAudio = toggleFullAudio;
 window.playWordAudio = playWordAudio;
 window.changePage = changePage;
