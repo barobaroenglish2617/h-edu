@@ -13,7 +13,7 @@ const AUDIO_BUCKET = 'audio';
    ✅ [1] 오디오 파일 이름 명단
    ========================================================= */
 const AUDIO_FILENAMES = {
-  1: "Story 1 - Made with Clipchamp.mp4",
+  1: "Story 1 - Made with Clipchamp.mp4?v=2",
   2: "Story 2 - Made with Clipchamp.mp4",
   3: "Story 3 - Made with Clipchamp.mp4",
   4: "Story 4 - Made with Clipchamp.mp4",
@@ -588,5 +588,6 @@ window.changePage = changePage;
 window.restartStory = restartStory;
 window.goBack = goBack;
 window.goHome = goHome;
+
 
 
