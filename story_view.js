@@ -34,7 +34,7 @@ const AUDIO_FILENAMES = {
    * 1번 이야기 예시: [0초, 1초, 4초, 9초, 15초, 20초]
    ========================================================= */
 const AUDIO_TIMESTAMPS = {
-  1: [0, 4, 9, 15, 20], 
+  1: [0, 4.5, 11, 17.2, 23.1], 
   // 나머지는 나중에 시간 재서 채워넣으세요
   2: [0, 0, 0, 0, 0],
   3: [0, 0, 0, 0, 0], 
@@ -588,4 +588,5 @@ window.changePage = changePage;
 window.restartStory = restartStory;
 window.goBack = goBack;
 window.goHome = goHome;
+
 
