@@ -1,6 +1,4 @@
 // story_view.js
-// - 텍스트(제목/단어/문장페이지 구성): JS에 고정
-// - 이미지/오디오: Supabase Storage에서 public URL로 불러옴
 
 const SUPABASE_URL = 'https://otygcwbxbbtsnuvhwcqt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eWdjd2J4YmJ0c251dmh3Y3F0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODQ0NjcsImV4cCI6MjA3OTc2MDQ2N30.ck2UU7v2SfxXD8snUrpyek9Q6PbCjR76NWfdoEHn2Lg';
@@ -9,10 +7,21 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ Storage 버킷명
 const IMAGE_BUCKET = 'image';
-const AUDIO_BUCKET = 'audio'; // 스토리 전체 음원: story1.mp3 형태로 업로드 예정
+const AUDIO_BUCKET = 'audio'; 
 
 /* =========================================================
-   1) 스토리 제목/단어 리스트 (JS에 고정)
+   ✅ [추가됨] 오디오 파일 이름 명단
+   (여기에 파트너님이 올린 실제 파일명을 적어야 연결됩니다!)
+   ========================================================= */
+const AUDIO_FILENAMES = {
+  1: "Story 1 - Made with Clipchamp.mp4",  // ★ 1번 이야기 실제 파일명
+  2: "story2.mp3", // (예시)
+  3: "story3.mp3", // (예시)
+  // ... 필요한 만큼 추가
+};
+
+/* =========================================================
+   1) 스토리 제목/단어 리스트 (JS에 고정 - 기존과 동일)
    ========================================================= */
 const TITLE_BY_STORY = {
   1: "The sun is up",
@@ -49,10 +58,7 @@ const WORDS_BY_STORY = {
 };
 
 /* =========================================================
-   2) 페이지 설계도 (너가 준 포맷 그대로)
-   - "스토리-그림번호" 다음 줄에
-     - "단어"면 단어장 페이지
-     - 그 외는 문장(여러 줄)
+   2) 페이지 설계도 (기존과 동일)
    ========================================================= */
 const PAGE_PLAN_TEXT = `
 1-1
@@ -74,8 +80,6 @@ The ant is in bed.
 Bell! It is fun!
 The ant is upset.
 
-
-
 2-1
 단어
 
@@ -96,7 +100,6 @@ Dad says. "My hat!"
 The fat cat sits on Dad.
 It is fun!
 
-
 3-1
 단어
 
@@ -116,7 +119,6 @@ The lamp is on the bed.
 3-5
 The kid gets a nut.
 The pig eats the nut.
-
 
 4-1
 단어
@@ -140,7 +142,6 @@ The fox wins!
 The cats sit in the box now.
 The fox is not sad!
 
-
 5-1
 단어
 
@@ -159,7 +160,6 @@ The magic fish can dance!
 
 5-5
 "It is easy. You can dance, too!" says the magic fish.
-
 
 6-1
 단어
@@ -180,7 +180,6 @@ Mom puts the ring on the sink.
 The pink ring falls.
 They run and help!
 
-
 7-1
 단어
 
@@ -188,16 +187,13 @@ They run and help!
 It is cool.
 "My coat!"
 
-
 7-3
 The queen meets a cook.
 She gives beef to him.
 
-
 7-4
 The cook sees a fish at the sea.
 He goes home.
-
 
 7-5
 He reads a book.
@@ -207,7 +203,6 @@ He cooks soup.
 The moon is up.
 "Let's eat!" says the queen.
 
-
 8-1
 단어
 
@@ -215,16 +210,13 @@ The moon is up.
 A boy looks out the window.
 It is snowing.
 
-
 8-3
 A cow has a coin on its tail.
 The boy runs to the cow.
 
-
 8-4
 "Hi, I am Cow wow! Join me!" it says.
 "Okay." The boy says.
-
 
 8-5
 The cow makes a cake.
@@ -233,15 +225,12 @@ The cow makes a cake.
 They eat cake.
 "Yummy!", they yell.
 
-
-
 9-1
 단어
 
 9-2
 A cute boy needs a new suit.
 He has newspaper.
-
 
 9-3
 He cuts the blue suit.
@@ -253,10 +242,8 @@ He gets fruit juice and pie.
 "This is mine.“
 "Yummy!"
 
-
 9-5
 "Oh no! My pie!" he yells.
-
 
 10-1
 단어
@@ -265,22 +252,17 @@ He gets fruit juice and pie.
 A girl sits by a teacher.
 The teacher has paper and candy.
 
-
 10-3
 "Look at the sky. The weather is nice," says the teacher.
 A hamburger is in the sky!
-
 
 10-4
 A happy puppy runs to it.
 The hamburger falls.
 
-
 10-5
 The puppy eats the hamburger.
 A nurse runs to the puppy.
-
-
 
 11-1
 단어
@@ -289,8 +271,6 @@ A nurse runs to the puppy.
 A frog sits by the flower.
 The frog is brown.
 It has a brush.
-
-
 
 11-3
 It crosses the blocks.
@@ -301,7 +281,6 @@ The frog sits by the clock.
 "I can fly!"
 The frog is happy
 
-
 11-5
 A girl is crying.
 "Don't cry! Ice cream for you!" says the frog.
@@ -309,7 +288,6 @@ A girl is crying.
 11-6
 She eats ice cream. 
 The girl is happy now
-
 
 12-1
 단어
@@ -333,7 +311,6 @@ They make a plane on the green grass.
 The princess gives magic glasses to the prince.
 The prince smiles.
 
-
 13-1
 단어
 
@@ -356,7 +333,6 @@ They ski and skate.
 13-6
 They swim and swing.
 "Yes!" says the snowman.
-
 
 14-1
 단어
@@ -431,8 +407,16 @@ function getImageUrl(storyIdNum, imgNo) {
   return getPublicUrl(IMAGE_BUCKET, `${storyIdNum}-${imgNo}.png`);
 }
 
+// ✅ [수정됨] 오디오 파일명 매핑 적용!
 function getStoryAudioUrl(storyIdNum) {
-  return getPublicUrl(AUDIO_BUCKET, `story${storyIdNum}.mp3`);
+  // 1. 위에서 만든 명단(AUDIO_FILENAMES)에서 파일 이름을 찾음
+  const filename = AUDIO_FILENAMES[storyIdNum];
+  
+  // 2. 파일명이 없으면 빈 문자열 반환 (오디오 없음 처리)
+  if (!filename) return '';
+
+  // 3. Supabase audio 버킷에서 해당 파일명으로 주소 생성
+  return getPublicUrl(AUDIO_BUCKET, filename);
 }
 
 function parsePagePlan(text) {
@@ -579,7 +563,7 @@ function toggleFullAudio() {
   }
 }
 
-// 단어 음원: 일단 로컬 audio 폴더 유지(원하면 Supabase audio로 바꿔줄게)
+// 단어 음원: 로컬 audio 폴더 사용 (필요시 수정 가능)
 function playWordAudio(word) {
   const cleanWord = String(word).trim().toLowerCase();
   const audio = new Audio(`audio/${cleanWord}.mp3`);
