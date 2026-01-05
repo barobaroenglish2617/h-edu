@@ -55,7 +55,7 @@ const TITLE_BY_STORY = {
    ========================================================= */
 const WORDS_BY_STORY = {
   1: ["ant","apple","egg","elf","owl","ox","up","upset","it","bus","bed","bell"],
-  2: ["can","cap","cat","dad","duck","desk","fat","fan","fun","get","gum","god","hat","ham","hand","jam","job","jump"],
+  2: ["can","cat","dad","duck","fat","fun","hat","jump"],
   3: ["kid","king","kiwi","leg","lip","lamp","mom","map","man","nut","net","not","pen","pet","pig","quiz","quick","queen"],
   4: ["red","run","rain","sad","sit","sun","ten","tent","taxi","van","vet","very","win","wind","wow","six","fox","box"],
   5: ["yes","yell","yummy","zero","zoo","zebra","visit","busy","easy","city","dance","voice","gym","magic","gel","bench","lunch","rich","shop","dish","fish"],
@@ -588,6 +588,7 @@ window.changePage = changePage;
 window.restartStory = restartStory;
 window.goBack = goBack;
 window.goHome = goHome;
+
 
 
 
