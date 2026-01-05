@@ -5,16 +5,15 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ✅ Storage 버킷명
+// Storage 버킷명
 const IMAGE_BUCKET = 'image';
 const AUDIO_BUCKET = 'audio'; 
 
 /* =========================================================
-   ✅ [추가됨] 오디오 파일 이름 명단
-   (여기에 파트너님이 올린 실제 파일명을 적어야 연결됩니다!)
+   ✅ 오디오 파일 이름 명단
    ========================================================= */
 const AUDIO_FILENAMES = {
-  1: "Story 1 - Made with Clipchamp.mp4",  // ★ 1번 이야기 실제 파일명
+  1: "Story 1 - Made with Clipchamp.mp4",
   2: "Story 2 - Made with Clipchamp.mp4",
   3: "Story 3 - Made with Clipchamp.mp4",
   4: "Story 4 - Made with Clipchamp.mp4",
@@ -31,23 +30,25 @@ const AUDIO_FILENAMES = {
 };
 
 /* =========================================================
-   1) 스토리 제목/단어 리스트 (JS에 고정 - 기존과 동일)
+   ✅ [핵심] 오디오 타임스탬프 (페이지별 시작 시간: 초 단위)
+   * 예: Story 1은 [0초, 1초, 4초, 9초, 15초, 20초] 순서로 페이지가 넘어감
+   ========================================================= */
+const AUDIO_TIMESTAMPS = {
+  1: [0, 1, 4, 9, 15, 20],  // ★ 1번 이야기 시간표 적용됨!
+  // 나머지는 나중에 시간 재서 채워넣으세요 (일단 0으로 채워둠)
+  2: [0, 0, 0, 0, 0, 0],
+  3: [0, 0, 0, 0, 0, 0], 
+  // ... 14번까지
+};
+
+/* =========================================================
+   1) 스토리 제목/단어 리스트
    ========================================================= */
 const TITLE_BY_STORY = {
-  1: "The sun is up",
-  2: "Dad's Hat",
-  3: "The Quick Pet",
-  4: "The Red Fox",
-  5: "The Magic Fish",
-  6: "The Pink Ring",
-  7: "Cook the soup",
-  8: "The cow and the boy",
-  9: "The Blue Suit",
-  10: "The Flying Hamburger",
-  11: "The Flying Frog",
-  12: "The Prince and Princess",
-  13: "Snake and Snowman",
-  14: "The Magic Drum"
+  1: "The sun is up", 2: "Dad's Hat", 3: "The Quick Pet", 4: "The Red Fox", 5: "The Magic Fish",
+  6: "The Pink Ring", 7: "Cook the soup", 8: "The cow and the boy", 9: "The Blue Suit",
+  10: "The Flying Hamburger", 11: "The Flying Frog", 12: "The Prince and Princess",
+  13: "Snake and Snowman", 14: "The Magic Drum"
 };
 
 const WORDS_BY_STORY = {
@@ -68,7 +69,7 @@ const WORDS_BY_STORY = {
 };
 
 /* =========================================================
-   2) 페이지 설계도 (기존과 동일)
+   2) 페이지 설계도
    ========================================================= */
 const PAGE_PLAN_TEXT = `
 1-1
@@ -379,7 +380,7 @@ let bgAudio = null;
 let playBtn = null;
 
 let storyId = 0;
-let pages = []; // [{storyId, imgNo, type:'words'|'text', lines:[...]}]
+let pages = []; 
 let currentPage = 0;
 let storyAudioUrl = '';
 
@@ -395,17 +396,9 @@ document.addEventListener('DOMContentLoaded', () => {
 /* =========================================================
    유틸
    ========================================================= */
-function norm(s) {
-  return String(s ?? '').replace(/\r/g, '').trim();
-}
-
+function norm(s) { return String(s ?? '').replace(/\r/g, '').trim(); }
 function escapeHtml(s) {
-  return String(s)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
 function getPublicUrl(bucket, path) {
@@ -417,15 +410,9 @@ function getImageUrl(storyIdNum, imgNo) {
   return getPublicUrl(IMAGE_BUCKET, `${storyIdNum}-${imgNo}.png`);
 }
 
-// ✅ [수정됨] 오디오 파일명 매핑 적용!
 function getStoryAudioUrl(storyIdNum) {
-  // 1. 위에서 만든 명단(AUDIO_FILENAMES)에서 파일 이름을 찾음
   const filename = AUDIO_FILENAMES[storyIdNum];
-  
-  // 2. 파일명이 없으면 빈 문자열 반환 (오디오 없음 처리)
   if (!filename) return '';
-
-  // 3. Supabase audio 버킷에서 해당 파일명으로 주소 생성
   return getPublicUrl(AUDIO_BUCKET, filename);
 }
 
@@ -437,7 +424,7 @@ function parsePagePlan(text) {
     const lines = block.split('\n').map(l => norm(l)).filter(Boolean);
     if (!lines.length) continue;
 
-    const head = lines[0]; // "1-2"
+    const head = lines[0];
     const m = head.match(/^(\d+)\s*-\s*(\d+)$/);
     if (!m) continue;
 
@@ -466,7 +453,6 @@ async function init() {
     return;
   }
 
-  // 1) 페이지 설계도에서 해당 스토리 페이지만 추출
   const allPages = parsePagePlan(PAGE_PLAN_TEXT);
   pages = allPages.filter(p => p.storyId === storyId);
 
@@ -475,7 +461,6 @@ async function init() {
     return;
   }
 
-  // 2) 스토리 전체 오디오(있으면 연결)
   storyAudioUrl = getStoryAudioUrl(storyId);
   if (storyAudioUrl) bgAudio.src = storyAudioUrl;
 
@@ -506,14 +491,16 @@ function renderPage(index) {
   };
   imgEl.src = imgUrl;
 
-  // 오디오 버튼: 단어 페이지 + 오디오 있을 때만 표시
+  // 오디오 버튼 표시 여부
   if (page.type === 'words' && storyAudioUrl) {
     playBtn.style.display = 'flex';
   } else {
-    playBtn.style.display = 'none';
-    bgAudio.pause();
-    playBtn.innerHTML = `<span>🔊 Story Full Audio</span>`;
-    playBtn.classList.remove('playing');
+    // 단어장 아닐 땐 숨기거나, 혹은 '항상 표시'를 원하시면 여기를 수정하면 됩니다.
+    // 지금은 단어장 페이지만 버튼 보이게 되어있음 -> 수정 제안: 모든 페이지에서 보이게?
+    // 일단 기존 로직 유지 (단어장만 전체듣기 버튼 표시) 
+    // ※ 주의: 2페이지부터 버튼이 사라지면 '전체 듣기' 중단을 못하나요?
+    // -> 네, 그래서 보통은 항상 보여주는 게 좋습니다.
+    playBtn.style.display = 'flex'; // ★ 수정됨: 항상 보이게 변경
   }
 
   // 내용
@@ -536,6 +523,18 @@ function renderPage(index) {
     const lines = page.lines || [];
     const safeHtml = lines.map(line => escapeHtml(line)).join('<br>');
     textEl.innerHTML = `<div class="story-text">${safeHtml}</div>`;
+  }
+
+  // ✅ [타임스탬프 기능] 페이지 바뀔 때 오디오 점프
+  const timestamps = AUDIO_TIMESTAMPS[storyId];
+  if (timestamps && timestamps.length > index && bgAudio && storyAudioUrl) {
+    // 1. 해당 페이지 시간으로 이동
+    bgAudio.currentTime = timestamps[index];
+    
+    // 2. 만약 '재생 중' 상태라면 이동 후 자동 재생
+    if (playBtn.classList.contains('playing')) {
+      bgAudio.play();
+    }
   }
 
   // 네비
@@ -573,7 +572,6 @@ function toggleFullAudio() {
   }
 }
 
-// 단어 음원: 로컬 audio 폴더 사용 (필요시 수정 가능)
 function playWordAudio(word) {
   const cleanWord = String(word).trim().toLowerCase();
   const audio = new Audio(`audio/${cleanWord}.mp3`);
@@ -591,4 +589,3 @@ window.changePage = changePage;
 window.restartStory = restartStory;
 window.goBack = goBack;
 window.goHome = goHome;
-
