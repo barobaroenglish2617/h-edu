@@ -15,9 +15,19 @@ const AUDIO_BUCKET = 'audio';
    ========================================================= */
 const AUDIO_FILENAMES = {
   1: "Story 1 - Made with Clipchamp.mp4",  // ★ 1번 이야기 실제 파일명
-  2: "story2.mp3", // (예시)
-  3: "story3.mp3", // (예시)
-  // ... 필요한 만큼 추가
+  2: "Story 2 - Made with Clipchamp.mp4",
+  3: "Story 3 - Made with Clipchamp.mp4",
+  4: "Story 4 - Made with Clipchamp.mp4",
+  5: "Story 5 - Made with Clipchamp.mp4",
+  6: "Story 6 - Made with Clipchamp.mp4",
+  7: "Story 7 - Made with Clipchamp.mp4",
+  8: "Story 8 - Made with Clipchamp.mp4",
+  9: "Story 9 - Made with Clipchamp.mp4",
+  10: "Story 10 - Made with Clipchamp.mp4",
+  11: "Story 11 - Made with Clipchamp.mp4",
+  12: "Story 12 - Made with Clipchamp.mp4",
+  13: "Story 13 - Made with Clipchamp.mp4",
+  14: "Story 14 - Made with Clipchamp.mp4"
 };
 
 /* =========================================================
@@ -581,3 +591,4 @@ window.changePage = changePage;
 window.restartStory = restartStory;
 window.goBack = goBack;
 window.goHome = goHome;
+
