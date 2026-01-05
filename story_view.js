@@ -5,12 +5,12 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Storage 버킷명
+// ✅ Storage 버킷명
 const IMAGE_BUCKET = 'image';
 const AUDIO_BUCKET = 'audio'; 
 
 /* =========================================================
-   ✅ 오디오 파일 이름 명단
+   ✅ [1] 오디오 파일 이름 명단
    ========================================================= */
 const AUDIO_FILENAMES = {
   1: "Story 1 - Made with Clipchamp.mp4",
@@ -30,19 +30,18 @@ const AUDIO_FILENAMES = {
 };
 
 /* =========================================================
-   ✅ [핵심] 오디오 타임스탬프 (페이지별 시작 시간: 초 단위)
-   * 예: Story 1은 [0초, 1초, 4초, 9초, 15초, 20초] 순서로 페이지가 넘어감
+   ✅ [2] 오디오 타임스탬프 (페이지별 시작 시간: 초 단위)
+   * 1번 이야기 예시: [0초, 1초, 4초, 9초, 15초, 20초]
    ========================================================= */
 const AUDIO_TIMESTAMPS = {
-  1: [0, 1, 4, 9, 15, 20],  // ★ 1번 이야기 시간표 적용됨!
-  // 나머지는 나중에 시간 재서 채워넣으세요 (일단 0으로 채워둠)
-  2: [0, 0, 0, 0, 0, 0],
-  3: [0, 0, 0, 0, 0, 0], 
-  // ... 14번까지
+  1: [0, 1, 4, 9, 15, 20], 
+  // 나머지는 나중에 시간 재서 채워넣으세요
+  2: [0, 0, 0, 0, 0],
+  3: [0, 0, 0, 0, 0], 
 };
 
 /* =========================================================
-   1) 스토리 제목/단어 리스트
+   [3] 스토리 제목 리스트
    ========================================================= */
 const TITLE_BY_STORY = {
   1: "The sun is up", 2: "Dad's Hat", 3: "The Quick Pet", 4: "The Red Fox", 5: "The Magic Fish",
@@ -51,6 +50,9 @@ const TITLE_BY_STORY = {
   13: "Snake and Snowman", 14: "The Magic Drum"
 };
 
+/* =========================================================
+   [4] 단어 리스트
+   ========================================================= */
 const WORDS_BY_STORY = {
   1: ["ant","apple","album","elf","egg","exit","it","ink","igloo","ox","owl","olive","up","upset","bus","bed","bell"],
   2: ["can","cap","cat","dad","duck","desk","fat","fan","fun","get","gum","god","hat","ham","hand","jam","job","jump"],
@@ -69,7 +71,7 @@ const WORDS_BY_STORY = {
 };
 
 /* =========================================================
-   2) 페이지 설계도
+   [5] 페이지 설계도
    ========================================================= */
 const PAGE_PLAN_TEXT = `
 1-1
@@ -374,7 +376,7 @@ He hits the drum. Bang!
 `.trim();
 
 /* =========================================================
-   상태
+   상태 & 초기화
    ========================================================= */
 let bgAudio = null;
 let playBtn = null;
@@ -394,9 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================================
-   유틸
+   유틸 함수
    ========================================================= */
 function norm(s) { return String(s ?? '').replace(/\r/g, '').trim(); }
+
 function escapeHtml(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
@@ -442,7 +445,7 @@ function parsePagePlan(text) {
 }
 
 /* =========================================================
-   init
+   init 함수
    ========================================================= */
 async function init() {
   const params = new URLSearchParams(window.location.search);
@@ -468,7 +471,7 @@ async function init() {
 }
 
 /* =========================================================
-   렌더링
+   렌더링 함수 (renderPage)
    ========================================================= */
 function renderPage(index) {
   currentPage = index;
@@ -481,7 +484,7 @@ function renderPage(index) {
 
   const page = pages[currentPage];
 
-  // 이미지
+  // 1. 이미지
   const imgEl = document.getElementById('story-img');
   const imgUrl = getImageUrl(page.storyId, page.imgNo);
 
@@ -491,19 +494,14 @@ function renderPage(index) {
   };
   imgEl.src = imgUrl;
 
-  // 오디오 버튼 표시 여부
-  if (page.type === 'words' && storyAudioUrl) {
+  // 2. 오디오 버튼 (항상 표시)
+  if (storyAudioUrl) {
     playBtn.style.display = 'flex';
   } else {
-    // 단어장 아닐 땐 숨기거나, 혹은 '항상 표시'를 원하시면 여기를 수정하면 됩니다.
-    // 지금은 단어장 페이지만 버튼 보이게 되어있음 -> 수정 제안: 모든 페이지에서 보이게?
-    // 일단 기존 로직 유지 (단어장만 전체듣기 버튼 표시) 
-    // ※ 주의: 2페이지부터 버튼이 사라지면 '전체 듣기' 중단을 못하나요?
-    // -> 네, 그래서 보통은 항상 보여주는 게 좋습니다.
-    playBtn.style.display = 'flex'; // ★ 수정됨: 항상 보이게 변경
+    playBtn.style.display = 'none';
   }
 
-  // 내용
+  // 3. 내용 (단어 or 텍스트)
   const textEl = document.getElementById('text-area');
 
   if (page.type === 'words') {
@@ -525,19 +523,20 @@ function renderPage(index) {
     textEl.innerHTML = `<div class="story-text">${safeHtml}</div>`;
   }
 
-  // ✅ [타임스탬프 기능] 페이지 바뀔 때 오디오 점프
+  // ✅ [핵심 기능] 페이지 바뀔 때 오디오 시간 점프
   const timestamps = AUDIO_TIMESTAMPS[storyId];
+  // 시간표가 있고, 현재 페이지에 해당하는 시간이 있다면?
   if (timestamps && timestamps.length > index && bgAudio && storyAudioUrl) {
-    // 1. 해당 페이지 시간으로 이동
+    // 1. 시간 이동
     bgAudio.currentTime = timestamps[index];
     
-    // 2. 만약 '재생 중' 상태라면 이동 후 자동 재생
+    // 2. 재생 중이면 계속 재생
     if (playBtn.classList.contains('playing')) {
       bgAudio.play();
     }
   }
 
-  // 네비
+  // 4. 네비게이션 버튼
   document.getElementById('btn-prev').disabled = (currentPage === 0);
 
   const nextBtn = document.getElementById('btn-next');
@@ -551,7 +550,7 @@ function renderPage(index) {
 }
 
 /* =========================================================
-   컨트롤
+   컨트롤 함수들
    ========================================================= */
 function changePage(step) {
   const next = currentPage + step;
